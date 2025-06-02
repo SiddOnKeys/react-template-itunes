@@ -1,0 +1,122 @@
+.card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.cardMedia {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.cardContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 12px !important;
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  color: #ffffff;
+}
+
+.contentWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 40px;
+  overflow: hidden;
+}
+
+.buttonsContainer {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  gap: 4px;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.card:hover .buttonsContainer {
+  opacity: 1;
+}
+
+.actionButton {
+  background-color: #1db954 !important;
+  padding: 6px !important;
+}
+
+.actionButton:hover {
+  background-color: #1ed760 !important;
+}
+
+.actionButton svg {
+  width: 18px;
+  height: 18px;
+  color: #000000;
+}
+
+.trackTitle {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.artistText {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+}
+
+.artistText:hover {
+  color: #ffffff;
+}
+
+.genreText {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75rem;
+}
+
+.dialog {
+  background: #282828;
+  color: #ffffff;
+  border-radius: 12px;
+}
+
+.dialogTitle {
+  color: #ffffff;
+}
+
+.dialogContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.dialogLabel {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.dialogValue {
+  color: #ffffff;
+}
+
+.dialogCloseButton {
+  color: #1db954;
+}
