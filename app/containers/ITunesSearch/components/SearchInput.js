@@ -21,10 +21,20 @@ const SearchInput = ({ value, onChange, onClear, onSearch, loading }) => {
       onChange={onChange}
       value={value}
       fullWidth
+      data-testid="search-input"
+      inputProps={{
+        'data-testid': 'search-input-field'
+      }}
       endAdornment={
         <InputAdornment position="end">
           {value && (
-            <IconButton className={inputStyles.iconButton} onClick={onClear} size="small" aria-label="Clear search">
+            <IconButton
+              className={inputStyles.iconButton}
+              onClick={onClear}
+              size="small"
+              aria-label="Clear search"
+              data-testid="clear-search"
+            >
               <ClearIcon />
             </IconButton>
           )}
@@ -33,6 +43,7 @@ const SearchInput = ({ value, onChange, onClear, onSearch, loading }) => {
             onClick={onSearch}
             disabled={loading}
             aria-label="Search tracks"
+            data-testid="search-button"
           >
             {loading ? (
               <div className={inputStyles.loaderContainer}>
