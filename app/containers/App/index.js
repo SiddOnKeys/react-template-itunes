@@ -11,10 +11,9 @@ import React, { useEffect, useState } from 'react';
 import { Switch, Route } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Router } from 'react-router';
-import map from 'lodash/map';
 import { PersistGate } from 'redux-persist/integration/react';
 import { Provider } from 'react-redux';
-import { CssBaseline, Container } from '@mui/material';
+import { CssBaseline, Container, Box } from '@mui/material';
 import { ThemeProvider as MUIThemeProvider, createTheme, StyledEngineProvider } from '@mui/material/styles';
 import { Global } from '@emotion/react';
 import styled from '@emotion/styled';
@@ -38,7 +37,7 @@ const BlurredBackground = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(76, 0, 130, 0.4) 0%, rgba(147, 51, 234, 0.4) 100%);
+  background: linear-gradient(135deg, rgb(107 29 163 / 17%) 0%, rgb(70 7 127 / 40%) 100%);
   backdrop-filter: blur(10px);
   z-index: -1;
 `;
@@ -47,13 +46,15 @@ const StyledContainer = styled(Container)`
   min-height: 100vh;
   position: relative;
   z-index: 1;
+  padding: 0 !important;
+  padding-bottom: 80px !important; /* Add space for the playback bar */
 `;
 
 export const theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#9333EA', // Bright violet
+      main: '#2D1B69', // Bright violet
       light: '#A855F7',
       dark: '#7E22CE'
     },
@@ -130,23 +131,27 @@ export function App() {
                     <MUIThemeProvider theme={theme}>
                       <CssBaseline />
                       <Global styles={globalStyles} />
-                      <>
+                      <Box sx={{ position: 'relative', minHeight: '100vh' }}>
                         <BlurredBackground />
-                        <StyledContainer>
+                        <StyledContainer maxWidth={false} disableGutters>
                           <For
                             ParentComponent={(props) => <Switch {...props} />}
-                            of={map(Object.keys(routeConfig))}
+                            of={Object.keys(routeConfig)}
                             renderItem={(routeKey, index) => {
-                              const Component = routeConfig[routeKey].component;
+                              if (!Object.prototype.hasOwnProperty.call(routeConfig, routeKey)) {
+                                return null;
+                              }
+                              const route = routeConfig[routeKey];
+                              const Component = route.component;
                               return (
                                 <Route
-                                  exact={routeConfig[routeKey].exact}
+                                  exact={route.exact}
                                   key={index}
-                                  path={routeConfig[routeKey].route}
+                                  path={route.route}
                                   render={(props) => {
                                     const updatedProps = {
                                       ...props,
-                                      ...routeConfig[routeKey].props
+                                      ...route.props
                                     };
                                     return <Component {...updatedProps} />;
                                   }}
@@ -155,7 +160,7 @@ export function App() {
                             }}
                           />
                         </StyledContainer>
-                      </>
+                      </Box>
                     </MUIThemeProvider>
                   </StyledEngineProvider>
                 </ConnectedLanguageProvider>

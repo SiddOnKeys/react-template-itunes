@@ -3,38 +3,50 @@ import snakeCase from 'lodash/snakeCase';
 import camelCase from 'lodash/camelCase';
 import { mapKeysDeep } from './index';
 
-const API_TYPES = {
+export const API_TYPES = {
   GITHUB: 'github',
+  ITUNES: 'itunes',
   DEFAULT: 'default'
+};
+
+const API_URLS = {
+  [API_TYPES.GITHUB]: process.env.GITHUB_URL,
+  [API_TYPES.ITUNES]: 'https://itunes.apple.com',
+  [API_TYPES.DEFAULT]: null
 };
 
 const apiClients = {
   [API_TYPES.GITHUB]: null,
+  [API_TYPES.ITUNES]: null,
   [API_TYPES.DEFAULT]: null
 };
 
 /**
- * Retrieves an API client for a specified type, defaulting to 'github'.
+ * Retrieves an API client for a specified type.
  *
  * @date 01/03/2024 - 14:47:28
  *
- * @param {string} [type='github'] - The type of API client to retrieve.
+ * @param {string} type - The type of API client to retrieve.
  * @returns {Object} The requested API client, or undefined if it does not exist.
  */
-export const getApiClient = (type = 'github') => apiClients[type];
+export const getApiClient = (type = API_TYPES.GITHUB) => apiClients[type];
 
 /**
- * Generates an API client for a specified type, defaulting to 'github'.
- * If the type is 'github', it creates and stores an API client for GitHub.
- * Otherwise, it creates and stores a default API client.
+ * Generates an API client for a specified type.
+ * Supports GitHub and iTunes APIs with their respective base URLs.
  *
  * @date 01/03/2024 - 14:48:09
  *
  * @param {string} type - The type of API client to generate.
  * @returns {Object} The generated API client.
  */
-export const generateApiClient = (type = 'github') => {
-  const client = createApiClientWithTransForm(process.env.GITHUB_URL);
+export const generateApiClient = (type = API_TYPES.GITHUB) => {
+  const baseURL = API_URLS[type];
+  if (!baseURL) {
+    throw new Error(`Invalid API type: ${type}`);
+  }
+
+  const client = createApiClientWithTransForm(baseURL);
   return Object.assign({}, apiClients, { [type]: client })[type];
 };
 

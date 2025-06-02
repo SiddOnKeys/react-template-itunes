@@ -1,0 +1,25 @@
+.gridContainer {
+  width: 100%;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  padding: 0;
+}
+
+.gridItem {
+  width: 100%;
+  aspect-ratio: 2/3;
+  display: flex;
+}
+
+.gridItem > * {
+  width: 100%;
+  height: 100%;
+}
+
+.emptyMessage {
+  grid-column: 1/-1;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+}

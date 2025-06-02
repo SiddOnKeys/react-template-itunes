@@ -1,55 +1,90 @@
-import { selectTracks, selectLoading, selectError, selectQuery } from '../selectors';
+import {
+  selectTracks,
+  selectLoading,
+  selectError,
+  selectQuery,
+  makeSelectTrackById
+} from '../selectors';
 import { initialState } from '../reducer';
 
 describe('ITunesSearch selectors', () => {
-  it('should select the tracks', () => {
-    const tracks = [{ id: 1, name: 'Track 1' }];
-    const mockedState = {
-      itunesSearch: {
-        ...initialState,
-        tracks
-      }
-    };
-    expect(selectTracks(mockedState)).toEqual(tracks);
+  const mockTrack = {
+    trackId: 123,
+    trackName: 'Test Track'
+  };
+
+  const mockState = {
+    itunesSearch: {
+      tracks: [mockTrack],
+      loading: true,
+      error: { message: 'Test error' },
+      query: 'test query'
+    }
+  };
+
+  it('should select tracks', () => {
+    const selected = selectTracks(mockState);
+    expect(selected).toEqual([mockTrack]);
+
+    const emptyState = { itunesSearch: initialState };
+    const emptySelected = selectTracks(emptyState);
+    expect(emptySelected).toEqual(initialState.tracks);
   });
 
-  it('should select the loading state', () => {
-    const mockedState = {
-      itunesSearch: {
-        ...initialState,
-        loading: true
-      }
-    };
-    expect(selectLoading(mockedState)).toEqual(true);
+  it('should select loading state', () => {
+    const selected = selectLoading(mockState);
+    expect(selected).toBe(true);
+
+    const emptyState = { itunesSearch: initialState };
+    const emptySelected = selectLoading(emptyState);
+    expect(emptySelected).toBe(initialState.loading);
   });
 
-  it('should select the error', () => {
-    const error = new Error('Test error');
-    const mockedState = {
-      itunesSearch: {
-        ...initialState,
-        error
-      }
-    };
-    expect(selectError(mockedState)).toEqual(error);
+  it('should select error state', () => {
+    const selected = selectError(mockState);
+    expect(selected).toEqual({ message: 'Test error' });
+
+    const emptyState = { itunesSearch: initialState };
+    const emptySelected = selectError(emptyState);
+    expect(emptySelected).toBe(initialState.error);
   });
 
-  it('should select the query', () => {
-    const query = 'test query';
-    const mockedState = {
-      itunesSearch: {
-        ...initialState,
-        query
-      }
-    };
-    expect(selectQuery(mockedState)).toEqual(query);
+  it('should select query', () => {
+    const selected = selectQuery(mockState);
+    expect(selected).toBe('test query');
+
+    const emptyState = { itunesSearch: initialState };
+    const emptySelected = selectQuery(emptyState);
+    expect(emptySelected).toBe(initialState.query);
   });
 
-  it('should select initial state when state is empty', () => {
-    const emptyState = {};
-    expect(selectTracks(emptyState)).toEqual(initialState.tracks);
-    expect(selectLoading(emptyState)).toEqual(initialState.loading);
-    expect(selectError(emptyState)).toEqual(initialState.error);
-    expect(selectQuery(emptyState)).toEqual(initialState.query);
+  describe('makeSelectTrackById', () => {
+    const selectTrackById = makeSelectTrackById();
+
+    it('should find track by ID', () => {
+      const selected = selectTrackById(mockState, '123');
+      expect(selected).toEqual(mockTrack);
+    });
+
+    it('should return undefined if track not found', () => {
+      const selected = selectTrackById(mockState, '456');
+      expect(selected).toBeUndefined();
+    });
+
+    it('should handle empty tracks array', () => {
+      const emptyState = { itunesSearch: { ...initialState, tracks: [] } };
+      const selected = selectTrackById(emptyState, '123');
+      expect(selected).toBeUndefined();
+    });
+
+    it('should handle string IDs', () => {
+      const stateWithStringId = {
+        itunesSearch: {
+          tracks: [{ ...mockTrack, trackId: '123' }]
+        }
+      };
+      const selected = selectTrackById(stateWithStringId, 123);
+      expect(selected).toEqual({ ...mockTrack, trackId: '123' });
+    });
   });
 });

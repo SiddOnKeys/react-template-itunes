@@ -1,1 +1,32 @@
-/*eslint-disable*/module.exports={messages:JSON.parse("{\"get_repo_details\":\"Get details of repositories\",\"matching_repos\":[\"Total number of matching repos: \",[\"totalCount\"]],\"not_found_page_container\":\"This is the NotFoundPage container!\",\"repo_full_name_unavailable\":\"Repository full name unavaiable\",\"repo_list\":\"Repository List\",\"repo_name_unavailable\":\"Repository name is unavailable\",\"repo_search\":\"Repository Search\",\"repo_search_default\":\"Search for a repository by entering it's name in the search box\",\"repo_stars_unavailable\":\"Repository stars are unavaiable\",\"repository_full_name\":[\"Repository full name: \",[\"fullName\"]],\"repository_name\":[\"Repository Name: \",[\"name\"]],\"repository_stars\":[\"Repository stars: \",[\"stars\"]],\"search_query\":[\"Search query: \",[\"repoName\"]],\"something_went_wrong\":\"Sorry. Something went wrong! Please try again in sometime.\",\"stories\":\"Go to Storybook\",\"wednesday_solutions\":\"Wednesday Solutions\"}")};
+/*eslint-disable*/
+module.exports = {
+  messages: JSON.parse(
+    JSON.stringify({
+      get_repo_details: 'Get details of repositories',
+      matching_repos: ['Total number of matching repos: ', ['totalCount']],
+      not_found_page_container: 'This is the NotFoundPage container!',
+      repo_full_name_unavailable: 'Repository full name unavaiable',
+      repo_list: 'Repository List',
+      repo_name_unavailable: 'Repository name is unavailable',
+      repo_search: 'Repository Search',
+      repo_search_default: "Search for a repository by entering it's name in the search box",
+      repo_stars_unavailable: 'Repository stars are unavaiable',
+      repository_full_name: ['Repository full name: ', ['fullName']],
+      repository_name: ['Repository Name: ', ['name']],
+      repository_stars: ['Repository stars: ', ['stars']],
+      search_query: ['Search query: ', ['repoName']],
+      search_tracks_error: 'Failed to search tracks',
+      something_went_wrong: 'Sorry. Something went wrong! Please try again in sometime.',
+      stories: 'Go to Storybook',
+      wednesday_solutions: 'Wednesday Solutions',
+      default_template: 'wednesday-solutions/react-template',
+      back_to_search: 'Back to Search',
+      track_not_found: 'Track not found',
+      track_album: ['Album: ', ['name']],
+      track_genre: ['Genre: ', ['name']],
+      track_release_date: ['Release Date: ', ['date']],
+      audio_not_supported: 'Your browser does not support the audio element.',
+      error_prefix: ['Error: ', ['message']]
+    })
+  )
+};

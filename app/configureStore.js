@@ -8,6 +8,7 @@ import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import createReducer from './create-root-reducer';
 import { createInjectorsEnhancer } from 'redux-injectors';
+import rootSaga from './root-saga';
 
 // redux persit configuration
 const persistConfig = {
@@ -70,6 +71,9 @@ export default function configureStore(initialState = {}) {
   store.injectedReducers = {}; // Reducer registry
   store.injectedSagas = {}; // Saga registry
   /* eslint-enable immutable/no-mutation */
+
+  // Run the root saga
+  sagaMiddleware.run(rootSaga);
 
   // Make reducers hot reloadable, see http://mxs.is/googmo
   /* istanbul ignore next */
