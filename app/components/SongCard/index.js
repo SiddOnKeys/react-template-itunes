@@ -15,6 +15,7 @@ import {
   Button
 } from '@mui/material';
 import { PlayArrow, Pause, MoreVert } from '@mui/icons-material';
+import audioEventManager from '../../utils/audio-event-manager';
 import styles from './styles.css';
 
 /**
@@ -35,24 +36,69 @@ function SongCard({ track }) {
   const history = useHistory();
   const [isPlaying, setIsPlaying] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [audio, setAudio] = useState(null);
+
+  useEffect(() => {
+    let audio = new Audio(track.previewUrl);
+
+    // Handle play events
+    const handlePlay = async (event) => {
+      if (event.detail.trackId === track.trackId) {
+        try {
+          await audio.play();
+          setIsPlaying(true);
+        } catch (error) {
+          // Handle play() errors silently
+          setIsPlaying(false);
+        }
+      } else {
+        audio.pause();
+        setIsPlaying(false);
+      }
+    };
+
+    // Handle stop events
+    const handleStop = (event) => {
+      if (event.detail.trackId === track.trackId) {
+        audio.pause();
+        setIsPlaying(false);
+      }
+    };
+
+    // Handle audio ended
+    const handleEnded = () => {
+      audioEventManager.emitStop(track.trackId);
+    };
+
+    // Check if this track is currently playing
+    const currentTrackId = audioEventManager.getCurrentTrackId();
+    if (currentTrackId === track.trackId) {
+      setIsPlaying(true);
+    }
+
+    // Subscribe to events
+    const unsubscribePlay = audioEventManager.onPlay(handlePlay);
+    const unsubscribeStop = audioEventManager.onStop(handleStop);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      unsubscribePlay();
+      unsubscribeStop();
+      audio.removeEventListener('ended', handleEnded);
+      audio.pause();
+      audio = null;
+    };
+  }, [track.trackId, track.previewUrl]);
 
   const handlePlayPause = useCallback(
     (e) => {
       e.stopPropagation();
-      if (!audio) {
-        const newAudio = new Audio(track.previewUrl);
-        newAudio.addEventListener('ended', () => setIsPlaying(false));
-        setAudio(newAudio);
-        newAudio.play();
-      } else if (isPlaying) {
-        audio.pause();
+      if (isPlaying) {
+        audioEventManager.emitStop(track.trackId);
       } else {
-        audio.play();
+        audioEventManager.emitPlay(track.trackId);
       }
-      setIsPlaying(!isPlaying);
     },
-    [isPlaying, track.previewUrl, audio]
+    [isPlaying, track.trackId]
   );
 
   const handleDetailsClick = useCallback((e) => {
@@ -68,18 +114,14 @@ function SongCard({ track }) {
     history.push(`/tracks/${track.trackId}`);
   }, [history, track.trackId]);
 
-  useEffect(() => {
-    return () => {
-      if (audio) {
-        audio.pause();
-        audio.removeEventListener('ended', () => setIsPlaying(false));
-      }
-    };
-  }, [audio]);
-
   return (
     <>
-      <Card className={styles.card} onClick={handleCardClick} sx={{ cursor: 'pointer' }} data-testid="song-card">
+      <Card
+        className={`${styles.card} ${isPlaying ? styles.playing : ''}`}
+        onClick={handleCardClick}
+        sx={{ cursor: 'pointer' }}
+        data-testid="song-card"
+      >
         <CardMedia
           className={styles.cardMedia}
           component="img"
@@ -124,47 +166,63 @@ function SongCard({ track }) {
         onClose={handleCloseDetails}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ className: styles.dialog }}
+        PaperProps={{
+          className: styles.dialog,
+          sx: {
+            borderRadius: '20px',
+            '& .MuiDialogContent-root': {
+              padding: '24px'
+            }
+          }
+        }}
       >
         <DialogTitle className={styles.dialogTitle}>{track.trackName}</DialogTitle>
         <DialogContent className={styles.dialogContent}>
-          <Box>
-            <Typography variant="subtitle2" className={styles.dialogLabel}>
-              Artist
-            </Typography>
-            <Typography variant="body1" className={styles.dialogValue}>
-              {track.artistName}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="subtitle2" className={styles.dialogLabel}>
-              Album
-            </Typography>
-            <Typography variant="body1" className={styles.dialogValue}>
-              {track.collectionName}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="subtitle2" className={styles.dialogLabel}>
-              Genre
-            </Typography>
-            <Typography variant="body1" className={styles.dialogValue}>
-              {track.primaryGenreName}
-            </Typography>
-          </Box>
-          {track.releaseDate && (
+          <img
+            src={track.artworkUrl100.replace('100x100bb', '400x400bb')}
+            alt={track.trackName}
+            className={styles.dialogArtwork}
+            style={{ borderRadius: '16px' }}
+          />
+          <Box className={styles.dialogInfoSection}>
             <Box>
               <Typography variant="subtitle2" className={styles.dialogLabel}>
-                Release Date
+                Artist
               </Typography>
               <Typography variant="body1" className={styles.dialogValue}>
-                {new Date(track.releaseDate).toLocaleDateString()}
+                {track.artistName}
               </Typography>
             </Box>
-          )}
+            <Box>
+              <Typography variant="subtitle2" className={styles.dialogLabel}>
+                Album
+              </Typography>
+              <Typography variant="body1" className={styles.dialogValue}>
+                {track.collectionName}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="subtitle2" className={styles.dialogLabel}>
+                Genre
+              </Typography>
+              <Typography variant="body1" className={styles.dialogValue}>
+                {track.primaryGenreName}
+              </Typography>
+            </Box>
+            {track.releaseDate && (
+              <Box>
+                <Typography variant="subtitle2" className={styles.dialogLabel}>
+                  Release Date
+                </Typography>
+                <Typography variant="body1" className={styles.dialogValue}>
+                  {new Date(track.releaseDate).toLocaleDateString()}
+                </Typography>
+              </Box>
+            )}
+          </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDetails} className={styles.dialogCloseButton}>
+        <DialogActions className={styles.dialogActions}>
+          <Button onClick={handleCloseDetails} className={styles.dialogCloseButton} sx={{ borderRadius: '12px' }}>
             Close
           </Button>
         </DialogActions>

@@ -1,25 +1,30 @@
 .container {
-  padding: 2rem;
+  padding: 24px;
   max-width: 1200px;
   margin: 0 auto;
+
 }
 
 .paper {
-  padding: 2rem;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 12px;
 }
 
 .imageContainer {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  flex-shrink: 0;
+  position: relative;
+  width: 300px;
+  height: 300px;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .artwork {
   width: 100%;
-  max-width: 400px;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
   border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .detailsContainer {
@@ -29,15 +34,33 @@
 
 .backButtonContainer {
   display: flex;
-  align-items: center;
+  justify-content: flex-start;
 }
 
 .backButton {
-  transition: transform 0.2s ease-in-out !important;
+  text-transform: none;
+  border-radius: 12px;
 }
 
-.backButton:hover {
-  transform: translateX(-4px);
+.playButtonLarge {
+  background-color: #1db954 !important;
+  color: black !important;
+  transition: all 0.2s ease-in-out !important;
+  padding: 12px 32px !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 1px !important;
+  border-radius: 500px !important;
+}
+
+.playButtonLarge:hover {
+  background-color: #1ed760 !important;
+  transform: scale(1.02);
+}
+
+.playButtonLarge svg {
+  width: 24px;
+  height: 24px;
 }
 
 @media (max-width: 600px) {
@@ -47,5 +70,11 @@
 
   .paper {
     padding: 1rem;
+  }
+
+  .imageContainer {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
   }
 }

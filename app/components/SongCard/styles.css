@@ -16,6 +16,23 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
+.playing {
+  box-shadow: 0 0 0 2px #2ecc71;
+  animation: pulseGlow 2s infinite;
+}
+
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.5), 0 0 15px rgba(46, 204, 113, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.3), 0 0 25px rgba(46, 204, 113, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.5), 0 0 15px rgba(46, 204, 113, 0.3);
+  }
+}
+
 .cardMedia {
   width: 100%;
   aspect-ratio: 1;
@@ -93,30 +110,64 @@
 }
 
 .dialog {
-  background: #282828;
+  background: #1212123f;
   color: #ffffff;
-  border-radius: 12px;
+  border-radius: 20px;
+  overflow: hidden;
 }
 
 .dialogTitle {
   color: #ffffff;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .dialogContent {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px;
+  gap: 20px;
+  padding: 24px !important;
+}
+
+.dialogArtwork {
+  width: 100%;
+  max-width: 300px;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  align-self: center;
+  margin-bottom: 8px;
+}
+
+.dialogInfoSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .dialogLabel {
   color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+  margin-bottom: 2px;
 }
 
 .dialogValue {
   color: #ffffff;
+  font-size: 1rem;
+}
+
+.dialogActions {
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .dialogCloseButton {
-  color: #1db954;
+  color: #ffffff !important;
+  background-color: #7d1db9 !important;
+  text-transform: none !important;
+  padding: 6px 16px !important;
+  border-radius: 12px !important;
+}
+
+.dialogCloseButton:hover {
+  background-color: #9029d8 !important;
 }

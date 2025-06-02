@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Typography } from '@mui/material';
 import SongCard from '@app/components/SongCard';
+import audioEventManager from '@app/utils/audio-event-manager';
 import gridStyles from '../../styles/Grid.css';
 
 /**
@@ -11,6 +12,21 @@ import gridStyles from '../../styles/Grid.css';
  * @param {boolean} props.loading - Loading state
  */
 const TrackGrid = ({ tracks, loading }) => {
+  // Set or clear the queue whenever tracks change
+  useEffect(() => {
+    if (tracks.length > 0) {
+      audioEventManager.setQueue(tracks);
+    } else {
+      // Clear the queue when there are no tracks
+      audioEventManager.setQueue([]);
+      // Also stop any currently playing track
+      const currentTrackId = audioEventManager.getCurrentTrackId();
+      if (currentTrackId) {
+        audioEventManager.emitStop(currentTrackId);
+      }
+    }
+  }, [tracks]);
+
   return (
     <div className={gridStyles.gridContainer}>
       {tracks.map((track) => (

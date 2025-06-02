@@ -10,6 +10,7 @@ import { selectTracks, selectLoading, selectError, selectQuery } from './selecto
 import SearchInput from './components/SearchInput';
 import TrackGrid from './components/TrackGrid';
 import containerStyles from './styles/Container.css';
+import PlaybackBar from '@app/components/PlaybackBar/index';
 
 /**
  * ITunesSearch Container Component
@@ -109,6 +110,7 @@ export function ITunesSearch({ dispatchSearchTracks, dispatchClearTracks, tracks
       <Paper className={containerStyles.resultsContainer} elevation={0}>
         <TrackGrid tracks={tracks} loading={loading} />
       </Paper>
+      <PlaybackBar />
     </div>
   );
 }

@@ -1,97 +1,85 @@
-import { searchTracks } from '../service';
+import { generateApiClient, API_TYPES } from '@utils/apiUtils';
+import { searchTracks, ITUNES_BASE_URL } from '@services/itunesApi';
 
-describe('ITunesSearch Service', () => {
-  const mockFetch = jest.fn();
-  global.fetch = mockFetch;
+// Mock the API client generator
+jest.mock('@utils/apiUtils', () => ({
+  generateApiClient: jest.fn(() => ({
+    get: jest.fn()
+  })),
+  API_TYPES: {
+    ITUNES: 'itunes'
+  }
+}));
+
+describe('iTunes API Service', () => {
+  let apiClient;
 
   beforeEach(() => {
-    mockFetch.mockClear();
+    // Get the mocked API client
+    apiClient = generateApiClient(API_TYPES.ITUNES);
+    // Clear all mocks
+    jest.clearAllMocks();
   });
 
-  it('should make a search request with the correct URL', async () => {
-    const query = 'test artist';
-    const mockResponse = {
-      results: [
-        {
-          trackId: 123,
-          trackName: 'Test Track',
-          artistName: 'Test Artist'
-        }
-      ]
-    };
+  describe('searchTracks', () => {
+    it('should make a search request with the correct URL and parameters', async () => {
+      const query = 'test artist';
+      const mockResponse = {
+        resultCount: 1,
+        results: [
+          {
+            trackId: 123,
+            trackName: 'Test Track',
+            artistName: 'Test Artist',
+            previewUrl: 'https://example.com/preview.mp3',
+            artworkUrl100: 'https://example.com/artwork.jpg',
+            collectionName: 'Test Album',
+            primaryGenreName: 'Pop',
+            releaseDate: '2024-01-01'
+          }
+        ]
+      };
 
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(mockResponse)
+      apiClient.get.mockResolvedValueOnce(mockResponse);
+
+      const result = await searchTracks(query);
+
+      expect(apiClient.get).toHaveBeenCalledWith(`/search?term=${encodeURIComponent(query)}&entity=song&limit=20`);
+      expect(result).toEqual(mockResponse);
     });
 
-    const result = await searchTracks(query);
+    it('should handle special characters in search query', async () => {
+      const query = 'test & artist + song';
+      const mockResponse = { results: [] };
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song`,
-      expect.any(Object)
-    );
-    expect(result).toEqual(mockResponse);
-  });
+      apiClient.get.mockResolvedValueOnce(mockResponse);
 
-  it('should make a lookup request when searching by trackId', async () => {
-    const trackId = '123';
-    const mockResponse = {
-      results: [
-        {
-          trackId: 123,
-          trackName: 'Test Track',
-          artistName: 'Test Artist'
-        }
-      ]
-    };
+      await searchTracks(query);
 
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(mockResponse)
+      expect(apiClient.get).toHaveBeenCalledWith(`/search?term=${encodeURIComponent(query)}&entity=song&limit=20`);
     });
 
-    const result = await searchTracks(trackId);
+    it('should handle API errors', async () => {
+      const query = 'test';
+      const error = new Error('API Error');
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      `https://itunes.apple.com/lookup?id=${trackId}`,
-      expect.any(Object)
-    );
-    expect(result).toEqual(mockResponse);
-  });
+      apiClient.get.mockRejectedValueOnce(error);
 
-  it('should throw an error for failed requests', async () => {
-    const query = 'test';
-    const errorMessage = 'API Error';
-
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 400,
-      statusText: errorMessage
+      await expect(searchTracks(query)).rejects.toThrow('API Error');
     });
 
-    await expect(searchTracks(query)).rejects.toThrow(`HTTP error! status: 400 ${errorMessage}`);
-  });
+    it('should handle empty responses', async () => {
+      const query = 'nonexistent';
+      const mockResponse = { resultCount: 0, results: [] };
 
-  it('should throw an error for network failures', async () => {
-    const query = 'test';
-    const networkError = new Error('Network failure');
+      apiClient.get.mockResolvedValueOnce(mockResponse);
 
-    mockFetch.mockRejectedValueOnce(networkError);
-
-    await expect(searchTracks(query)).rejects.toThrow(networkError);
-  });
-
-  it('should handle empty responses', async () => {
-    const query = 'nonexistent';
-    const mockResponse = { results: [] };
-
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(mockResponse)
+      const result = await searchTracks(query);
+      expect(result).toEqual(mockResponse);
     });
 
-    const result = await searchTracks(query);
-    expect(result).toEqual(mockResponse);
+    it('should use the correct base URL', () => {
+      expect(ITUNES_BASE_URL).toBe('https://itunes.apple.com');
+    });
   });
 });

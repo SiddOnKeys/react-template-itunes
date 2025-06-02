@@ -13,7 +13,7 @@ import PropTypes from 'prop-types';
 import { Router } from 'react-router';
 import { PersistGate } from 'redux-persist/integration/react';
 import { Provider } from 'react-redux';
-import { CssBaseline, Container } from '@mui/material';
+import { CssBaseline, Container, Box } from '@mui/material';
 import { ThemeProvider as MUIThemeProvider, createTheme, StyledEngineProvider } from '@mui/material/styles';
 import { Global } from '@emotion/react';
 import styled from '@emotion/styled';
@@ -47,6 +47,7 @@ const StyledContainer = styled(Container)`
   position: relative;
   z-index: 1;
   padding: 0 !important;
+  padding-bottom: 80px !important; /* Add space for the playback bar */
 `;
 
 export const theme = createTheme({
@@ -130,7 +131,7 @@ export function App() {
                     <MUIThemeProvider theme={theme}>
                       <CssBaseline />
                       <Global styles={globalStyles} />
-                      <>
+                      <Box sx={{ position: 'relative', minHeight: '100vh' }}>
                         <BlurredBackground />
                         <StyledContainer maxWidth={false} disableGutters>
                           <For
@@ -159,7 +160,7 @@ export function App() {
                             }}
                           />
                         </StyledContainer>
-                      </>
+                      </Box>
                     </MUIThemeProvider>
                   </StyledEngineProvider>
                 </ConnectedLanguageProvider>
