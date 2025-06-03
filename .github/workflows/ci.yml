@@ -26,9 +26,13 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci --force
 
-      # - name: 🔍 Lint
-      #   run: npm run lint:ci
-      #cicid-test-4
+      - name: 🔍 Lint
+        run: npm run lint:ci
+
+        #cicid-test-4
+
+
+
       # - name: 🧪 Test
       #   run: npm test -- --coverage
 
