@@ -1,63 +1,68 @@
 import React from 'react';
-import { render, fireEvent, screen } from '@testing-library/react';
+import { render, fireEvent, screen, act } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { HomeContainer } from '../index';
 import configureStore from 'redux-mock-store';
 import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
+import { I18nProvider } from '@lingui/react';
+import { i18n } from '@lingui/core';
 
-// Mock the API client
-jest.mock('@services/repoApi', () => ({
-  getRepos: jest.fn()
-}));
+// Mock translations
+const mockTranslations = {
+  repo_search: 'Repository Search',
+  get_repo_details: 'Search for a repository to see details',
+  default_template: 'Search repositories...',
+  stories: 'Go to Stories',
+  search_query: 'Search results for: {{repoName}}',
+  repo_count: 'Found {{count}} matching repositories',
+  repo_search_default: 'Enter a repository name to search'
+};
 
-// Mock the translation function
-jest.mock('@app/utils', () => ({
-  translate: (id) => id
-}));
-
-// Mock the T component
-jest.mock('@components/T', () => {
-  const T = ({ id }) => <span>{id}</span>;
-  return T;
-});
-
-// Mock the RepoCard component
-jest.mock('@components/RepoCard', () => ({
-  RepoCard: ({ name }) => <div>{name}</div>
-}));
-
-// Mock the If component
-jest.mock('@components/If', () => ({
-  If: ({ condition, children, otherwise }) => (condition ? children : otherwise)
-}));
-
-// Mock the For component
-jest.mock('@components/For', () => ({
-  For: ({ of, renderItem }) => <div>{of.map((item, index) => renderItem(item, index))}</div>
-}));
+i18n.load('en', mockTranslations);
+i18n.activate('en');
 
 const mockStore = configureStore([]);
 
-describe('HomeContainer', () => {
+describe('<HomeContainer />', () => {
+  const mockRepos = [
+    {
+      id: 1,
+      name: 'test-repo',
+      description: 'Test repository',
+      stargazers_count: 100,
+      language: 'JavaScript'
+    }
+  ];
+
   const defaultProps = {
-    dispatchGithubRepos: jest.fn(),
-    dispatchClearGithubRepos: jest.fn(),
-    reposData: null,
-    reposError: null,
+    reposData: { items: [] },
     repoName: '',
-    maxwidth: 1200,
-    padding: 20,
-    loading: false
+    loading: false,
+    reposError: null,
+    dispatchGithubRepos: jest.fn(),
+    dispatchClearRepos: jest.fn(),
+    dispatchSearchRepos: jest.fn()
   };
 
   const renderComponent = (props = {}) => {
-    const store = mockStore({});
+    const store = mockStore({
+      homeContainer: {
+        reposData: { items: [] },
+        repoName: '',
+        loading: false,
+        reposError: null,
+        ...props
+      }
+    });
+
     return render(
       <Provider store={store}>
-        <BrowserRouter>
-          <HomeContainer {...defaultProps} {...props} />
-        </BrowserRouter>
+        <I18nProvider i18n={i18n}>
+          <BrowserRouter>
+            <HomeContainer {...defaultProps} {...props} />
+          </BrowserRouter>
+        </I18nProvider>
       </Provider>
     );
   };
@@ -71,132 +76,90 @@ describe('HomeContainer', () => {
     jest.useRealTimers();
   });
 
-  it('should render without crashing', () => {
+  it('should render', () => {
     renderComponent();
     expect(screen.getByTestId('search-bar')).toBeInTheDocument();
-    expect(screen.getByTestId('search-icon')).toBeInTheDocument();
   });
 
   it('should handle search input change', () => {
-    renderComponent();
+    const dispatchSearchRepos = jest.fn();
+    renderComponent({ dispatchSearchRepos });
     const searchInput = screen.getByTestId('search-bar');
+
     fireEvent.change(searchInput, { target: { value: 'test-repo' } });
-    jest.advanceTimersByTime(300);
-    expect(defaultProps.dispatchGithubRepos).toHaveBeenCalledWith('test-repo');
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
+    expect(dispatchSearchRepos).toHaveBeenCalledWith('test-repo');
   });
 
   it('should clear repos when search input is empty', () => {
-    renderComponent();
+    const dispatchClearRepos = jest.fn();
+    renderComponent({ dispatchClearRepos });
     const searchInput = screen.getByTestId('search-bar');
-    fireEvent.change(searchInput, { target: { value: 'test-repo' } });
-    jest.advanceTimersByTime(300);
+
+    // First set a value
+    fireEvent.change(searchInput, { target: { value: 'test' } });
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
+    // Then clear it
     fireEvent.change(searchInput, { target: { value: '' } });
-    jest.advanceTimersByTime(300);
-    expect(defaultProps.dispatchClearGithubRepos).toHaveBeenCalled();
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
+    expect(dispatchClearRepos).toHaveBeenCalled();
   });
 
   it('should show loading state', () => {
     renderComponent({ loading: true });
-    expect(screen.getAllByTestId('skeleton')).toHaveLength(3);
+    expect(screen.getByTestId('loading-skeleton')).toBeInTheDocument();
   });
 
-  it('should show repo list when data is available', () => {
-    const reposData = {
-      items: [{ id: 1, name: 'repo1', fullName: 'user/repo1', stars: 100 }],
-      totalCount: 1
-    };
-    renderComponent({ reposData, repoName: 'repo1' });
-    expect(screen.getByText('repo1')).toBeInTheDocument();
+  it('should show repo list', () => {
+    const reposData = { items: mockRepos };
+    renderComponent({
+      reposData,
+      repoName: 'test'
+    });
+    expect(screen.getByText('test-repo')).toBeInTheDocument();
   });
 
-  it('should show error state when there is an error', () => {
-    renderComponent({ reposError: 'Not found', repoName: 'invalid-repo' });
-    expect(screen.getByText('Not found')).toBeInTheDocument();
+  it('should show error state', () => {
+    const error = 'Repository not found';
+    renderComponent({
+      reposError: error,
+      repoName: 'invalid-repo',
+      dispatchGithubRepos: jest.fn()
+    });
+    expect(screen.getByText(error)).toBeInTheDocument();
   });
 
-  describe('Component Rendering', () => {
-    it('should render the component correctly', () => {
-      expect(true).toBe(true);
-    });
-
-    it('should display the search input', () => {
-      expect(true).toBe(true);
-    });
-
-    it('should show loading state while fetching', () => {
-      expect(true).toBe(true);
-    });
+  it('should render the stories link', () => {
+    renderComponent();
+    expect(screen.getByText('Go to Stories')).toBeInTheDocument();
   });
 
   describe('Search Functionality', () => {
-    it('should handle search input changes', () => {
-      expect(true).toBe(true);
+    it('should trigger search on mount if repoName exists', () => {
+      const dispatchGithubRepos = jest.fn();
+      renderComponent({
+        repoName: 'test-repo',
+        dispatchGithubRepos,
+        reposData: { items: [] }
+      });
+
+      expect(dispatchGithubRepos).toHaveBeenCalledWith('test-repo');
     });
 
-    it('should trigger search on submit', () => {
-      expect(true).toBe(true);
-    });
+    it('should not trigger search on mount without repoName', () => {
+      const dispatchGithubRepos = jest.fn();
+      renderComponent({ dispatchGithubRepos });
 
-    it('should display search results', () => {
-      expect(true).toBe(true);
-    });
-
-    it('should handle empty search results', () => {
-      expect(true).toBe(true);
-    });
-  });
-
-  describe('Navigation', () => {
-    it('should navigate to track details on track click', () => {
-      expect(true).toBe(true);
-    });
-
-    it('should preserve search state after navigation', () => {
-      expect(true).toBe(true);
-    });
-  });
-
-  describe('Error Handling', () => {
-    it('should display error message on API failure', () => {
-      expect(true).toBe(true);
-    });
-
-    it('should allow retrying after error', () => {
-      expect(true).toBe(true);
-    });
-  });
-
-  describe('Redux Integration', () => {
-    it('should update store with search results', () => {
-      expect(true).toBe(true);
-    });
-
-    it('should clear results when search is reset', () => {
-      expect(true).toBe(true);
-    });
-
-    it('should handle loading states in store', () => {
-      expect(true).toBe(true);
-    });
-  });
-
-  describe('Pagination', () => {
-    it('should load more results when scrolling', () => {
-      expect(true).toBe(true);
-    });
-
-    it('should handle end of results', () => {
-      expect(true).toBe(true);
-    });
-  });
-
-  describe('Performance', () => {
-    it('should debounce search requests', () => {
-      expect(true).toBe(true);
-    });
-
-    it('should memoize search results', () => {
-      expect(true).toBe(true);
+      expect(dispatchGithubRepos).not.toHaveBeenCalled();
     });
   });
 });

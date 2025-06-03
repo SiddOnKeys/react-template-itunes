@@ -12,7 +12,15 @@ module.exports = {
     '@babel/preset-react'
   ],
   plugins: [
-    'lodash',
+    [
+      'transform-imports',
+      {
+        lodash: {
+          transform: 'lodash/${member}',
+          preventFullImport: true
+        }
+      }
+    ],
     'macros',
     '@babel/plugin-proposal-optional-chaining',
     '@babel/plugin-syntax-optional-chaining',
@@ -20,6 +28,20 @@ module.exports = {
     ['@babel/plugin-transform-private-property-in-object', { loose: true }],
     '@babel/plugin-syntax-dynamic-import',
     ['@babel/plugin-proposal-private-methods', { loose: true }],
+    [
+      'module-resolver',
+      {
+        root: ['./app'],
+        alias: {
+          '@components': './app/components',
+          '@containers': './app/containers',
+          '@utils': './app/utils',
+          '@services': './app/services',
+          '@themes': './app/themes',
+          '@translations': './app/translations'
+        }
+      }
+    ],
     [
       '@emotion',
       {
@@ -44,11 +66,9 @@ module.exports = {
     production: {
       only: ['app'],
       plugins: [
-        'lodash',
         [
           'transform-react-remove-prop-types',
           {
-            // Removes the import statements for React propTypes
             removeImport: true
           }
         ],
@@ -69,28 +89,6 @@ module.exports = {
             camel2DashComponentName: false
           },
           'icons'
-        ],
-        ['import', { libraryName: 'lodash' }, 'import-lodash']
-      ]
-    },
-    dev: {
-      plugins: [
-        [
-          'import',
-          {
-            libraryName: '@material-ui/core',
-            libraryDirectory: '',
-            camel2DashComponentName: false
-          }
-        ],
-        [
-          ('babel-plugin-import',
-          {
-            libraryName: '@mui/icons-material',
-            libraryDirectory: '',
-            camel2DashComponentName: false
-          },
-          'icons')
         ]
       ]
     },
@@ -121,12 +119,13 @@ module.exports = {
         '@babel/plugin-transform-modules-commonjs',
         'dynamic-import-node',
         [
-          'import',
+          'babel-plugin-import',
           {
-            libraryName: '@material-ui/core',
+            libraryName: '@mui/material',
             libraryDirectory: '',
             camel2DashComponentName: false
-          }
+          },
+          'core'
         ],
         [
           'babel-plugin-import',

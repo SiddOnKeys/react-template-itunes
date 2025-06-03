@@ -3,27 +3,25 @@
  * LanguageProvider reducer
  *
  */
-import { createActions } from 'reduxsauce';
+import { createReducer, createActions } from 'reduxsauce';
 import { produce } from 'immer';
-import { DEFAULT_LOCALE } from '@app/i18n';
+import { DEFAULT_LOCALE } from '@utils/i18n';
 
 export const { Types: languageProviderTypes, Creators: languageProviderActions } = createActions({
   changeLocale: ['locale']
 });
 
-export const initialState = {
+export const INITIAL_STATE = {
   locale: DEFAULT_LOCALE
 };
 
-export const languageProviderReducer = (state = initialState, action) =>
+const changeLocale = (state = INITIAL_STATE, { locale }) =>
   produce(state, (draft) => {
-    // the number of languages should and will increase.
-    // eslint-disable-next-line sonarjs/no-small-switch
-    switch (action.type) {
-      case languageProviderTypes.CHANGE_LOCALE:
-        draft.locale = action.locale;
-        break;
-    }
+    draft.locale = locale;
   });
 
-export default languageProviderReducer;
+export const HANDLERS = {
+  [languageProviderTypes.CHANGE_LOCALE]: changeLocale
+};
+
+export default createReducer(INITIAL_STATE, HANDLERS);

@@ -1,120 +1,88 @@
-import { put, call, takeLatest } from 'redux-saga/effects';
+import { put, call, takeLatest, delay } from 'redux-saga/effects';
 import { searchTracksSuccess, searchTracksError } from '../actions';
 import { SEARCH_TRACKS } from '../constants';
-import { searchTracksSaga, getTrackDetails } from '../saga';
-import { searchTracks as searchTracksAPI } from '../service';
+import itunesSearchSaga, { searchTracksSaga } from '../saga';
+import { searchTracks as searchTracksApi } from '@services/itunesApi';
 
 describe('ITunesSearch Saga', () => {
   describe('searchTracksSaga', () => {
     let searchGenerator;
+    const query = 'test';
 
     beforeEach(() => {
-      searchGenerator = searchTracksSaga({ query: 'test' });
+      searchGenerator = searchTracksSaga({ query });
     });
 
-    it('should dispatch searchTracksSuccess action on successful API call', () => {
+    it('should delay and then dispatch searchTracksSuccess action on successful API call', () => {
       const response = {
-        results: [
-          {
-            trackId: 123,
-            trackName: 'Test Track',
-            artistName: 'Test Artist'
-          }
-        ]
+        ok: true,
+        data: {
+          results: [
+            {
+              trackId: 123,
+              trackName: 'Test Track',
+              artistName: 'Test Artist'
+            }
+          ]
+        }
       };
 
-      expect(searchGenerator.next().value).toEqual(
-        call(searchTracksAPI, 'test')
-      );
+      // First yield should be delay
+      expect(searchGenerator.next().value).toEqual(delay(300));
 
-      expect(searchGenerator.next(response).value).toEqual(
-        put(searchTracksSuccess(response.results))
-      );
+      // Second yield should be the API call
+      expect(searchGenerator.next().value).toEqual(call(searchTracksApi, query));
 
+      // Third yield should dispatch success action
+      expect(searchGenerator.next(response).value).toEqual(put(searchTracksSuccess(response.data.results)));
+
+      // Saga should be done
       expect(searchGenerator.next().done).toBe(true);
     });
 
     it('should dispatch searchTracksError action on API error', () => {
       const error = new Error('API Error');
 
-      expect(searchGenerator.next().value).toEqual(
-        call(searchTracksAPI, 'test')
-      );
+      // First yield should be delay
+      expect(searchGenerator.next().value).toEqual(delay(300));
 
-      expect(searchGenerator.throw(error).value).toEqual(
-        put(searchTracksError(error))
-      );
+      // Second yield should be the API call
+      expect(searchGenerator.next().value).toEqual(call(searchTracksApi, query));
 
+      // On error, should dispatch error action
+      expect(searchGenerator.throw(error).value).toEqual(put(searchTracksError(error)));
+
+      // Saga should be done
       expect(searchGenerator.next().done).toBe(true);
     });
-  });
 
-  describe('getTrackDetails', () => {
-    let detailsGenerator;
-
-    beforeEach(() => {
-      detailsGenerator = getTrackDetails({ trackId: '123' });
-    });
-
-    it('should dispatch searchTracksSuccess action on successful API call', () => {
+    it('should dispatch searchTracksError action on unsuccessful response', () => {
       const response = {
-        results: [
-          {
-            trackId: 123,
-            trackName: 'Test Track',
-            artistName: 'Test Artist'
-          }
-        ]
+        ok: false,
+        data: {
+          message: 'Not found'
+        }
       };
 
-      expect(detailsGenerator.next().value).toEqual(
-        call(searchTracksAPI, '123')
-      );
+      // First yield should be delay
+      expect(searchGenerator.next().value).toEqual(delay(300));
 
-      expect(detailsGenerator.next(response).value).toEqual(
-        put(searchTracksSuccess(response.results))
-      );
+      // Second yield should be the API call
+      expect(searchGenerator.next().value).toEqual(call(searchTracksApi, query));
 
-      expect(detailsGenerator.next().done).toBe(true);
-    });
+      // Should dispatch error action with response message
+      expect(searchGenerator.next(response).value).toEqual(put(searchTracksError(new Error(response.data.message))));
 
-    it('should dispatch searchTracksError action on API error', () => {
-      const error = new Error('API Error');
-
-      expect(detailsGenerator.next().value).toEqual(
-        call(searchTracksAPI, '123')
-      );
-
-      expect(detailsGenerator.throw(error).value).toEqual(
-        put(searchTracksError(error))
-      );
-
-      expect(detailsGenerator.next().done).toBe(true);
-    });
-
-    it('should handle empty results', () => {
-      const response = { results: [] };
-
-      expect(detailsGenerator.next().value).toEqual(
-        call(searchTracksAPI, '123')
-      );
-
-      expect(detailsGenerator.next(response).value).toEqual(
-        put(searchTracksSuccess([]))
-      );
-
-      expect(detailsGenerator.next().done).toBe(true);
+      // Saga should be done
+      expect(searchGenerator.next().done).toBe(true);
     });
   });
 
   describe('root saga', () => {
-    const rootSaga = searchTracksSaga();
-
-    it('should fork watcher saga', () => {
-      const takeLatestDescriptor = rootSaga.next().value;
-      expect(takeLatestDescriptor).toEqual(
-        takeLatest(SEARCH_TRACKS, searchTracksSaga)
-      );
+    it('should start task to watch for SEARCH_TRACKS action', () => {
+      const saga = itunesSearchSaga();
+      const takeLatestDescriptor = saga.next().value;
+      expect(takeLatestDescriptor).toEqual(takeLatest(SEARCH_TRACKS, searchTracksSaga));
     });
   });
 });

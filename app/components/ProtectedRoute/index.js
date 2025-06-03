@@ -11,9 +11,9 @@ import routeConstants from '@utils/routeConstants';
 
 const ProtectedRoute = ({ render: C, isLoggedIn, handleLogout, ...rest }) => {
   const isUnprotectedRoute =
-    Object.keys(routeConstants)
-      .filter((key) => !routeConstants[key].isProtected)
-      .map((key) => routeConstants[key].route)
+    Object.entries(routeConstants)
+      .filter(([, value]) => !value.isProtected)
+      .map(([, value]) => value.route)
       .includes(rest.path) && rest.exact;
 
   const handleRedirection = (renderProps) => {
