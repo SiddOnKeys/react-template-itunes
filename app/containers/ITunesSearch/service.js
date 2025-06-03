@@ -1,23 +1,25 @@
-import request from '@utils/request';
+import { generateApiClient, API_TYPES } from '@utils/apiUtils';
+
+const itunesClient = generateApiClient(API_TYPES.ITUNES);
 
 /**
  * Search tracks in iTunes
  * @param {string} query - Search query
  * @returns {Promise} Response from iTunes API
  */
-export const searchTracks = async (query) => {
-  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=25`;
-  const response = await request(url);
-  return response.results;
-};
+export const searchTracks = (query) =>
+  itunesClient.get(`/search?term=${encodeURIComponent(query)}&media=music&limit=25`);
 
 /**
  * Get track details by ID
  * @param {number} trackId - Track ID
  * @returns {Promise} Track details
  */
-export const getTrackById = async (trackId) => {
-  const url = `https://itunes.apple.com/lookup?id=${trackId}`;
-  const response = await request(url);
-  return response.results[0];
-};
+export const getTrackById = (trackId) => itunesClient.get(`/lookup?id=${trackId}`);
+
+/**
+ * Search iTunes with custom parameters
+ * @param {string} term - Search term
+ * @returns {Promise} Search results
+ */
+export const searchITunes = (term) => itunesClient.get(`/search?term=${encodeURIComponent(term)}&entity=song&limit=50`);
