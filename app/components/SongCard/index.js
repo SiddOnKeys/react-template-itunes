@@ -44,8 +44,8 @@ function SongCard({ track }) {
     const handlePlay = async (event) => {
       if (event.detail.trackId === track.trackId) {
         try {
+          setIsPlaying(true); // Set playing state immediately
           await audio.play();
-          setIsPlaying(true);
         } catch (error) {
           // Handle play() errors silently
           setIsPlaying(false);
@@ -119,8 +119,8 @@ function SongCard({ track }) {
       <Card
         className={`${styles.card} ${isPlaying ? styles.playing : ''}`}
         onClick={handleCardClick}
-        sx={{ cursor: 'pointer' }}
-        data-testid="song-card"
+        sx={{ cursor: 'pointer', position: 'relative', zIndex: 1 }}
+        data-testid={`song-card-${track.trackId}`}
       >
         <CardMedia
           className={styles.cardMedia}
@@ -130,10 +130,10 @@ function SongCard({ track }) {
         />
         <CardContent className={styles.cardContent}>
           <Box className={styles.contentWrapper}>
-            <Typography className={styles.trackTitle} noWrap title={track.trackName}>
+            <Typography className={styles.trackTitle} noWrap title={track.trackName} data-testid="track-title">
               {track.trackName}
             </Typography>
-            <Typography className={styles.artistText} noWrap title={track.artistName}>
+            <Typography className={styles.artistText} noWrap title={track.artistName} data-testid="artist-text">
               {track.artistName}
             </Typography>
             <Typography className={styles.genreText} noWrap>
@@ -143,7 +143,8 @@ function SongCard({ track }) {
           <Box className={styles.buttonsContainer}>
             <IconButton
               className={styles.actionButton}
-              aria-label={isPlaying ? 'pause' : 'play'}
+              data-testid="playback-button"
+              data-playing={isPlaying}
               onClick={handlePlayPause}
               size="small"
             >
@@ -151,7 +152,7 @@ function SongCard({ track }) {
             </IconButton>
             <IconButton
               className={styles.actionButton}
-              aria-label="more details"
+              data-testid="details-button"
               onClick={handleDetailsClick}
               size="small"
             >
@@ -166,6 +167,7 @@ function SongCard({ track }) {
         onClose={handleCloseDetails}
         maxWidth="sm"
         fullWidth
+        data-testid="dialog"
         PaperProps={{
           className: styles.dialog,
           sx: {
@@ -176,12 +178,15 @@ function SongCard({ track }) {
           }
         }}
       >
-        <DialogTitle className={styles.dialogTitle}>{track.trackName}</DialogTitle>
-        <DialogContent className={styles.dialogContent}>
+        <DialogTitle className={styles.dialogTitle} data-testid="dialog-title">
+          {track.trackName}
+        </DialogTitle>
+        <DialogContent className={styles.dialogContent} data-testid="dialog-content">
           <img
             src={track.artworkUrl100.replace('100x100bb', '400x400bb')}
             alt={track.trackName}
             className={styles.dialogArtwork}
+            data-testid="dialog-artwork"
             style={{ borderRadius: '16px' }}
           />
           <Box className={styles.dialogInfoSection}>
@@ -222,7 +227,12 @@ function SongCard({ track }) {
           </Box>
         </DialogContent>
         <DialogActions className={styles.dialogActions}>
-          <Button onClick={handleCloseDetails} className={styles.dialogCloseButton} sx={{ borderRadius: '12px' }}>
+          <Button
+            onClick={handleCloseDetails}
+            className={styles.dialogCloseButton}
+            data-testid="dialog-close"
+            sx={{ borderRadius: '12px' }}
+          >
             Close
           </Button>
         </DialogActions>
