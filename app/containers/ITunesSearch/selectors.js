@@ -3,32 +3,44 @@ import { initialState } from './reducer';
 
 /**
  * Direct selector to the itunesSearch state domain
- * @param {Object} state - Global Redux state
- * @returns {Object} The iTunes search state
+ * @param {object} state - Global Redux state
+ * @returns {object} iTunes search state
  */
-const selectITunesSearchDomain = (state) => state.itunesSearch || initialState;
+const selectITunesSearchDomain = (state) => {
+  return state.itunesSearch || initialState;
+};
 
 /**
- * Select the tracks from state
+ * Select the tracks by ID mapping
+ * @returns {Object} Object with trackId as key and track as value
+ */
+export const selectTracksById = createSelector(selectITunesSearchDomain, (substate) => {
+  return substate.tracksById;
+});
+
+/**
+ * Select all tracks in order
  * @returns {Array} List of track objects
  */
-export const selectTracks = createSelector(selectITunesSearchDomain, (substate) => substate.tracks);
+export const selectTracks = createSelector(selectTracksById, (tracksById) => {
+  return Object.values(tracksById);
+});
 
 /**
- * Select the loading status
- * @returns {boolean} True if a search is in progress
+ * Select the loading state
+ * @returns {boolean} Loading state
  */
 export const selectLoading = createSelector(selectITunesSearchDomain, (substate) => substate.loading);
 
 /**
  * Select the error state
- * @returns {Object|null} Error object if present, null otherwise
+ * @returns {object} Error object
  */
 export const selectError = createSelector(selectITunesSearchDomain, (substate) => substate.error);
 
 /**
- * Select the current search query
- * @returns {string} Current search term
+ * Select the query state
+ * @returns {string} Current search query
  */
 export const selectQuery = createSelector(selectITunesSearchDomain, (substate) => substate.query);
 
@@ -38,7 +50,7 @@ export const selectQuery = createSelector(selectITunesSearchDomain, (substate) =
  */
 export const makeSelectTrackById = () =>
   createSelector(
-    selectTracks,
+    selectTracksById,
     (_, trackId) => trackId,
-    (tracks, trackId) => tracks.find((track) => track.trackId === Number(trackId))
+    (tracksById, trackId) => tracksById[Number(trackId)]
   );

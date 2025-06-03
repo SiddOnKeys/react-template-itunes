@@ -1,12 +1,20 @@
-import produce from 'immer';
+import { produce } from 'immer';
 import { SEARCH_TRACKS, SEARCH_TRACKS_SUCCESS, SEARCH_TRACKS_ERROR, CLEAR_TRACKS } from './constants';
 
 export const initialState = {
-  tracks: [],
+  tracksById: {}, // Normalized tracks with trackId as key
   loading: false,
   error: null,
   query: ''
 };
+
+/**
+ * Normalize tracks array into an object with trackId as key
+ * @param {Array} tracks - Array of track objects
+ * @returns {Object} Normalized tracks object
+ */
+const normalizeTracksById = (tracks) =>
+  tracks.reduce((acc, track) => Object.assign(acc, { [track.trackId]: { ...track } }), {});
 
 /**
  * iTunes search reducer
@@ -24,7 +32,7 @@ const itunesSearchReducer = (state = initialState, action) =>
         break;
 
       case SEARCH_TRACKS_SUCCESS:
-        draft.tracks = action.tracks;
+        draft.tracksById = normalizeTracksById(action.tracks);
         draft.loading = false;
         break;
 
@@ -34,7 +42,7 @@ const itunesSearchReducer = (state = initialState, action) =>
         break;
 
       case CLEAR_TRACKS:
-        draft.tracks = [];
+        draft.tracksById = {};
         draft.error = null;
         draft.query = '';
         break;

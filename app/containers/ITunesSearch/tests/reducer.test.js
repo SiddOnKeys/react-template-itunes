@@ -15,7 +15,7 @@ describe('itunesSearchReducer', () => {
 
   it('should handle searchTracks', () => {
     const query = 'test query';
-    const expectedResult = produce(state, draft => {
+    const expectedResult = produce(state, (draft) => {
       draft.loading = true;
       draft.error = null;
       draft.query = query;
@@ -30,17 +30,25 @@ describe('itunesSearchReducer', () => {
         trackId: 123,
         trackName: 'Test Track',
         artistName: 'Test Artist'
+      },
+      {
+        trackId: 456,
+        trackName: 'Another Track',
+        artistName: 'Another Artist'
       }
     ];
 
     // First set loading to true as it would be in real scenario
-    state = produce(state, draft => {
+    state = produce(state, (draft) => {
       draft.loading = true;
     });
 
-    const expectedResult = produce(state, draft => {
+    const expectedResult = produce(state, (draft) => {
       draft.loading = false;
-      draft.tracks = tracks;
+      draft.tracksById = {
+        123: tracks[0],
+        456: tracks[1]
+      };
     });
 
     expect(itunesSearchReducer(state, searchTracksSuccess(tracks))).toEqual(expectedResult);
@@ -50,11 +58,11 @@ describe('itunesSearchReducer', () => {
     const error = new Error('Test error');
 
     // First set loading to true as it would be in real scenario
-    state = produce(state, draft => {
+    state = produce(state, (draft) => {
       draft.loading = true;
     });
 
-    const expectedResult = produce(state, draft => {
+    const expectedResult = produce(state, (draft) => {
       draft.loading = false;
       draft.error = error;
     });
@@ -64,14 +72,16 @@ describe('itunesSearchReducer', () => {
 
   it('should handle clearTracks', () => {
     // First set some data in state
-    state = produce(state, draft => {
-      draft.tracks = [{ trackId: 123, trackName: 'Test Track' }];
+    state = produce(state, (draft) => {
+      draft.tracksById = {
+        123: { trackId: 123, trackName: 'Test Track' }
+      };
       draft.query = 'test query';
       draft.error = new Error('Some error');
     });
 
-    const expectedResult = produce(state, draft => {
-      draft.tracks = [];
+    const expectedResult = produce(state, (draft) => {
+      draft.tracksById = {};
       draft.query = '';
       draft.error = null;
     });
@@ -79,13 +89,13 @@ describe('itunesSearchReducer', () => {
     expect(itunesSearchReducer(state, clearTracks())).toEqual(expectedResult);
   });
 
-  it('should preserve tracks array reference when no changes are made', () => {
-    const tracks = [{ trackId: 123, trackName: 'Test Track' }];
-    state = produce(state, draft => {
-      draft.tracks = tracks;
+  it('should preserve state references when no changes are made', () => {
+    const tracksById = { 123: { trackId: 123, trackName: 'Test Track' } };
+    state = produce(state, (draft) => {
+      draft.tracksById = tracksById;
     });
 
     const newState = itunesSearchReducer(state, { type: 'SOME_UNHANDLED_ACTION' });
-    expect(newState.tracks).toBe(tracks); // Same reference
+    expect(newState.tracksById).toBe(tracksById); // Same reference
   });
 });

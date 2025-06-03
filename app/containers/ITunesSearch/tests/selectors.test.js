@@ -1,5 +1,6 @@
 import {
   selectTracks,
+  selectTracksById,
   selectLoading,
   selectError,
   selectQuery,
@@ -14,28 +15,43 @@ describe('ITunesSearch selectors', () => {
   };
 
   const mockState = {
-    itunesSearch: {
-      tracks: [mockTrack],
+    iTunesSearch: {
+      tracksById: {
+        123: mockTrack,
+        456: {
+          trackId: 456,
+          trackName: 'Another Track'
+        }
+      },
       loading: true,
       error: { message: 'Test error' },
       query: 'test query'
     }
   };
 
-  it('should select tracks', () => {
-    const selected = selectTracks(mockState);
-    expect(selected).toEqual([mockTrack]);
+  it('should select tracksById', () => {
+    const selected = selectTracksById(mockState);
+    expect(selected).toEqual(mockState.iTunesSearch.tracksById);
 
-    const emptyState = { itunesSearch: initialState };
+    const emptyState = { iTunesSearch: initialState };
+    const emptySelected = selectTracksById(emptyState);
+    expect(emptySelected).toEqual(initialState.tracksById);
+  });
+
+  it('should select tracks as array', () => {
+    const selected = selectTracks(mockState);
+    expect(selected).toEqual([mockState.iTunesSearch.tracksById[123], mockState.iTunesSearch.tracksById[456]]);
+
+    const emptyState = { iTunesSearch: initialState };
     const emptySelected = selectTracks(emptyState);
-    expect(emptySelected).toEqual(initialState.tracks);
+    expect(emptySelected).toEqual([]);
   });
 
   it('should select loading state', () => {
     const selected = selectLoading(mockState);
     expect(selected).toBe(true);
 
-    const emptyState = { itunesSearch: initialState };
+    const emptyState = { iTunesSearch: initialState };
     const emptySelected = selectLoading(emptyState);
     expect(emptySelected).toBe(initialState.loading);
   });
@@ -44,7 +60,7 @@ describe('ITunesSearch selectors', () => {
     const selected = selectError(mockState);
     expect(selected).toEqual({ message: 'Test error' });
 
-    const emptyState = { itunesSearch: initialState };
+    const emptyState = { iTunesSearch: initialState };
     const emptySelected = selectError(emptyState);
     expect(emptySelected).toBe(initialState.error);
   });
@@ -53,7 +69,7 @@ describe('ITunesSearch selectors', () => {
     const selected = selectQuery(mockState);
     expect(selected).toBe('test query');
 
-    const emptyState = { itunesSearch: initialState };
+    const emptyState = { iTunesSearch: initialState };
     const emptySelected = selectQuery(emptyState);
     expect(emptySelected).toBe(initialState.query);
   });
@@ -61,26 +77,28 @@ describe('ITunesSearch selectors', () => {
   describe('makeSelectTrackById', () => {
     const selectTrackById = makeSelectTrackById();
 
-    it('should find track by ID', () => {
+    it('should select track by id', () => {
       const selected = selectTrackById(mockState, '123');
       expect(selected).toEqual(mockTrack);
     });
 
     it('should return undefined if track not found', () => {
-      const selected = selectTrackById(mockState, '456');
+      const selected = selectTrackById(mockState, '789');
       expect(selected).toBeUndefined();
     });
 
-    it('should handle empty tracks array', () => {
-      const emptyState = { itunesSearch: { ...initialState, tracks: [] } };
+    it('should handle empty state', () => {
+      const emptyState = { iTunesSearch: initialState };
       const selected = selectTrackById(emptyState, '123');
       expect(selected).toBeUndefined();
     });
 
     it('should handle string IDs', () => {
       const stateWithStringId = {
-        itunesSearch: {
-          tracks: [{ ...mockTrack, trackId: '123' }]
+        iTunesSearch: {
+          tracksById: {
+            123: { ...mockTrack, trackId: '123' }
+          }
         }
       };
       const selected = selectTrackById(stateWithStringId, 123);
