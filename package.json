@@ -57,7 +57,7 @@
     "lint:staged": "lint-staged",
     "lhci": "lhci autorun",
     "test:clean": "rimraf ./coverage",
-    "test": "cross-env NODE_ENV=test jest --coverage --verbose",
+    "test": "cross-env NODE_ENV=test jest  --config=jest.config.json  --coverage --verbose",
     "test:staged": "jest --findRelatedTests",
     "test:watch": "cross-env NODE_ENV=test jest --watchAll",
     "test:coverage": "npm test -- --coverage",
