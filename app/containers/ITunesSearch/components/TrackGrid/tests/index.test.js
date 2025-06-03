@@ -1,76 +1,69 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import PropTypes from 'prop-types';
+import { Provider } from 'react-redux';
+import configureStore from 'redux-mock-store';
+import { I18nProvider } from '@lingui/react';
+import { i18n } from '@lingui/core';
 import TrackGrid from '../index';
 
 // Mock the SongCard component
-jest.mock('@app/components/SongCard', () => {
-  const MockSongCard = ({ track }) => (
-    <div data-testid="song-card">{track.trackName}</div>
-  );
-
-  MockSongCard.propTypes = {
-    track: PropTypes.shape({
-      trackName: PropTypes.string.isRequired
-    }).isRequired
-  };
-
-  return MockSongCard;
+jest.mock('@components/SongCard', () => {
+  const SongCard = ({ track }) => <div data-testid={`song-card-${track.trackId}`}>{track.trackName}</div>;
+  return SongCard;
 });
 
-// Mock the styles
-jest.mock('../../../styles/Grid.css', () => ({
-  gridContainer: 'gridContainer',
-  gridItem: 'gridItem',
-  emptyMessage: 'emptyMessage'
-}));
+const mockStore = configureStore([]);
 
 describe('<TrackGrid />', () => {
   const mockTracks = [
     {
       trackId: 1,
-      trackName: 'Track One',
-      artistName: 'Artist One',
-      artworkUrl100: 'https://example.com/art1.jpg',
-      previewUrl: 'https://example.com/preview1.mp3'
+      trackName: 'Test Track 1',
+      artistName: 'Test Artist 1',
+      artworkUrl100: 'test-url-1',
+      previewUrl: 'preview-url-1'
     },
     {
       trackId: 2,
-      trackName: 'Track Two',
-      artistName: 'Artist Two',
-      artworkUrl100: 'https://example.com/art2.jpg',
-      previewUrl: 'https://example.com/preview2.mp3'
+      trackName: 'Test Track 2',
+      artistName: 'Test Artist 2',
+      artworkUrl100: 'test-url-2',
+      previewUrl: 'preview-url-2'
     }
   ];
 
+  const store = mockStore({
+    audio: {
+      currentTrack: null,
+      isPlaying: false
+    }
+  });
+
+  const renderComponent = (props = {}) => {
+    return render(
+      <I18nProvider i18n={i18n}>
+        <Provider store={store}>
+          <TrackGrid tracks={[]} {...props} />
+        </Provider>
+      </I18nProvider>
+    );
+  };
+
   it('should render tracks correctly', () => {
-    render(<TrackGrid tracks={mockTracks} loading={false} />);
-
-    // Check if all tracks are rendered
-    const songCards = screen.getAllByTestId('song-card');
-    expect(songCards).toHaveLength(2);
-
-    // Check if track names are displayed
-    expect(screen.getByText('Track One')).toBeInTheDocument();
-    expect(screen.getByText('Track Two')).toBeInTheDocument();
+    renderComponent({ tracks: mockTracks });
+    expect(screen.getByTestId('song-card-1')).toBeInTheDocument();
+    expect(screen.getByTestId('song-card-2')).toBeInTheDocument();
+    expect(screen.getByText('Test Track 1')).toBeInTheDocument();
+    expect(screen.getByText('Test Track 2')).toBeInTheDocument();
   });
 
-  it('should show empty message when no tracks and not loading', () => {
-    render(<TrackGrid tracks={[]} loading={false} />);
-
-    expect(screen.getByText('Search for tracks to see results')).toBeInTheDocument();
+  it('should render no tracks message when tracks array is empty', () => {
+    renderComponent();
+    expect(screen.getByText('No tracks found')).toBeInTheDocument();
   });
 
-  it('should not show empty message when loading', () => {
-    render(<TrackGrid tracks={[]} loading={true} />);
-
-    expect(screen.queryByText('Search for tracks to see results')).not.toBeInTheDocument();
-  });
-
-  it('should render grid items with correct class names', () => {
-    const { container } = render(<TrackGrid tracks={mockTracks} loading={false} />);
-
-    expect(container.firstChild).toHaveClass('gridContainer');
-    expect(container.getElementsByClassName('gridItem')).toHaveLength(2);
+  it('should render loading state', () => {
+    renderComponent({ loading: true });
+    expect(screen.getByTestId('loading-skeleton')).toBeInTheDocument();
   });
 });
