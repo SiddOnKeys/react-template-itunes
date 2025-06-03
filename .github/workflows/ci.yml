@@ -26,13 +26,13 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci --force
 
-      # - name: 🔍 Lint
-      #   run: npm run lint:ci
+      - name: 🔍 Lint
+        run: npm run lint:ci
 
       #cicid-test-6
 
-      # - name: 🧪 Test
-      #   run: npm test -- --coverage
+      - name: 🧪 Test
+        run: npm test -- --coverage
 
       # - name: ♿ Accessibility tests using Storybook
       #   run: |
@@ -42,8 +42,8 @@ jobs:
       - name: 🏗️ Build
         run: npm run build:prod
 
-      # - name: 🚦 LHCI Benchmark
-      #   run: npm run lhci
+      - name: 🚦 LHCI Benchmark
+        run: npm run lhci
 
       # - name: 🔍 SonarQube Scan
       #   uses: SonarSource/sonarqube-scan-action@v5
