@@ -154,7 +154,9 @@ ITunesSearch.defaultProps = {
  * @returns {Object} Object containing tracks, loading, error and saved query state
  */
 const mapStateToProps = createStructuredSelector({
-  tracks: selectTracks,
+  tracks: (state) => {
+    return selectTracks(state);
+  },
   loading: selectLoading,
   error: selectError,
   savedQuery: selectQuery
