@@ -19,8 +19,6 @@ import '!file-loader?name=[name].[ext]!./images/favicon.ico';
 import 'file-loader?name=.htaccess!./.htaccess';
 /* eslint-enable import/no-unresolved */
 
-import { translationMessages } from '@utils/i18n';
-
 const container = document.getElementById('app');
 const root = createRoot(container);
 const render = () => {
@@ -35,7 +33,7 @@ if (module.hot) {
   // Hot reloadable React components and translation json files
   // modules.hot.accept does not accept dynamic dependencies,
   // have to be constants at compile-time
-  module.hot.accept(['@utils/i18n', '@containers/App'], () => {
+  module.hot.accept(['@containers/App'], () => {
     render();
   });
 }
