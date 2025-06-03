@@ -12,8 +12,16 @@
   "repository_name": "Repository Name: {name}",
   "repository_stars": "Repository stars: {stars}",
   "search_query": "Search query: {repoName}",
+  "search_tracks_error": "Failed to search tracks",
   "something_went_wrong": "Sorry. Something went wrong! Please try again in sometime.",
   "stories": "Go to Storybook",
   "wednesday_solutions": "Wednesday Solutions",
-  "default_template": "wednesday-solutions/react-template"
+  "default_template": "wednesday-solutions/react-template",
+  "back_to_search": "Back to Search",
+  "track_not_found": "Track not found",
+  "track_album": "Album: {name}",
+  "track_genre": "Genre: {name}",
+  "track_release_date": "Release Date: {date}",
+  "audio_not_supported": "Your browser does not support the audio element.",
+  "error_prefix": "Error: {message}"
 }

@@ -8,75 +8,106 @@ import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import createReducer from './create-root-reducer';
 import { createInjectorsEnhancer } from 'redux-injectors';
+import rootSaga from './root-saga';
 
-// redux persit configuration
+// redux persist configuration
 const persistConfig = {
   version: 1,
   key: 'root',
-  storage
+  storage,
+  blacklist: ['router'] // Don't persist router state
 };
 
-const persistedReducer = persistReducer(persistConfig, createReducer());
-
 /**
- * Configures and creates the Redux store with middleware, enhancers, and support for hot reloading.
- * It also sets up Redux Saga and the Redux DevTools extension.
- *
- * @date 01/03/2024 - 14:47:28
- *
- * @param {Object} [initialState={}] - The initial state of the store.
- * @returns {{ store: Object, persistor: Object }} An object containing the Redux store and the persistor for redux-persist.
+ * Configure Redux DevTools enhancer
+ * @returns {Function} Composed enhancer function
  */
-export default function configureStore(initialState = {}) {
-  let composeEnhancers = compose;
-  const reduxSagaMonitorOptions = {};
-
-  // If Redux Dev Tools and Saga Dev Tools Extensions are installed, enable them
-  /* istanbul ignore next */
+const configureDevTools = () => {
   if (
     process.env.NODE_ENV !== 'production' &&
     typeof window === 'object' &&
     window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
   ) {
-    composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({});
+    return window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({
+      trace: true,
+      traceLimit: 25
+    });
+  }
+  return compose;
+};
 
-    // NOTE: Uncomment the code below to restore support for Redux Saga
-    // Dev Tools once it supports redux-saga version 1.x.x
-    // if (window.__SAGA_MONITOR_EXTENSION__)
-    //   reduxSagaMonitorOptions = {
-    //     sagaMonitor: window.__SAGA_MONITOR_EXTENSION__,
-    //   };
+/**
+ * Configure Saga middleware and monitor
+ * @returns {Object} Saga middleware instance
+ */
+const configureSaga = () => {
+  const sagaOptions = {};
+
+  if (process.env.NODE_ENV !== 'production' && typeof window === 'object' && window.__SAGA_MONITOR_EXTENSION__) {
+    Object.assign(sagaOptions, { sagaMonitor: window.__SAGA_MONITOR_EXTENSION__ });
   }
 
-  const sagaMiddleware = createSagaMiddleware(reduxSagaMonitorOptions);
+  return createSagaMiddleware(sagaOptions);
+};
 
-  // Create the store with two middlewares
-  // 1. sagaMiddleware: Makes redux-sagas work
-  // 2. routerMiddleware: Syncs the location/URL path to the state
+/**
+ * Configure store enhancers
+ * @param {Function} sagaMiddleware - The saga middleware
+ * @param {Function} runSaga - The saga runner function
+ * @returns {Array} Array of enhancers
+ */
+const configureEnhancers = (sagaMiddleware, runSaga) => {
   const middlewares = [sagaMiddleware];
   const enhancers = [applyMiddleware(...middlewares)];
-  const runSaga = sagaMiddleware.run;
+
   const injectEnhancer = createInjectorsEnhancer({
     createReducer,
     runSaga
   });
 
-  const store = createStore(persistedReducer, initialState, composeEnhancers(...enhancers, injectEnhancer));
-  const persistor = persistStore(store);
+  return [...enhancers, injectEnhancer];
+};
 
-  /* eslint-disable immutable/no-mutation */
-  // Extensions
-  store.runSaga = sagaMiddleware.run;
-  store.injectedReducers = {}; // Reducer registry
-  store.injectedSagas = {}; // Saga registry
-  /* eslint-enable immutable/no-mutation */
+/**
+ * Create store extensions
+ * @param {Object} store - Redux store
+ * @param {Function} runSaga - Saga middleware run function
+ * @returns {Object} Store with extensions
+ */
+const createStoreExtensions = (store, runSaga) => ({
+  ...store,
+  runSaga,
+  injectedReducers: {},
+  injectedSagas: {}
+});
 
-  // Make reducers hot reloadable, see http://mxs.is/googmo
-  /* istanbul ignore next */
+/**
+ * Configures and creates the Redux store with middleware, enhancers, and support for hot reloading.
+ * It also sets up Redux Saga and the Redux DevTools extension.
+ *
+ * @param {Object} [initialState={}] - The initial state of the store.
+ * @returns {{ store: Object, persistor: Object }} An object containing the Redux store and the persistor for redux-persist.
+ */
+export default function configureStore(initialState = {}) {
+  const persistedReducer = persistReducer(persistConfig, createReducer());
+  const sagaMiddleware = configureSaga();
+  const composeEnhancers = configureDevTools();
+  const enhancers = configureEnhancers(sagaMiddleware, sagaMiddleware.run);
+
+  const store = createStore(persistedReducer, initialState, composeEnhancers(...enhancers));
+
+  const storeWithExtensions = createStoreExtensions(store, sagaMiddleware.run);
+  const persistor = persistStore(storeWithExtensions);
+
+  // Run the root saga
+  sagaMiddleware.run(rootSaga);
+
+  // Make reducers hot reloadable
   if (module.hot) {
     module.hot.accept('./create-root-reducer', () => {
-      store.replaceReducer(createReducer(store.injectedReducers));
+      storeWithExtensions.replaceReducer(createReducer(storeWithExtensions.injectedReducers));
     });
   }
-  return { store, persistor };
+
+  return { store: storeWithExtensions, persistor };
 }
