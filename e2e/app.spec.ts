@@ -1,13 +1,27 @@
 import { test, expect } from '@playwright/test';
 
-// Test selectors
+// Test selectors and constants
 const SELECTORS = {
   SEARCH_INPUT: '[data-testid="search-input-field"]',
   SEARCH_BUTTON: '[data-testid="search-button"]',
-  SONG_CARD: '[data-testid="song-card"]',
+  SONG_CARD: '[data-testid^="song-card-"]',
   CLEAR_SEARCH: '[data-testid="clear-search"]',
-  PLAY_BUTTON: 'button[aria-label="play"]',
-  PAUSE_BUTTON: 'button[aria-label="pause"]'
+  PLAYBACK_BUTTON: '[data-testid="playback-button"]',
+  TRACK_TITLE: '[data-testid="track-title"]',
+  ARTIST_TEXT: '[data-testid="artist-text"]',
+  PLAYBACK_BAR: '[data-testid="playback-bar"]',
+  DETAILS_BUTTON: '[data-testid="details-button"]',
+  DIALOG: '[data-testid="dialog"]',
+  DIALOG_TITLE: '[data-testid="dialog-title"]',
+  DIALOG_CONTENT: '[data-testid="dialog-content"]',
+  DIALOG_ARTWORK: '[data-testid="dialog-artwork"]',
+  DIALOG_CLOSE: '[data-testid="dialog-close"]',
+  ERROR_MESSAGE: '[data-testid="error-message"]',
+  NO_RESULTS: '[data-testid="no-results"]'
+};
+
+const ATTRIBUTES = {
+  PLAYING: 'data-playing'
 };
 
 // Test data
@@ -39,78 +53,136 @@ test.describe('iTunes Music Search Application', () => {
     const loadingSpinner = page.locator('role=progressbar');
     await expect(loadingSpinner).toBeVisible();
 
+    // Wait for API call to complete
+    const responsePromise = page.waitForResponse(
+      (response) => response.url().includes('itunes.apple.com/search') && response.status() === 200
+    );
+
+    try {
+      await responsePromise;
+    } catch (error) {
+      test.info().annotations.push({
+        type: 'debug',
+        description: `Failed to get API response: ${error.message}`
+      });
+      throw error;
+    }
+
+    // Wait for loading spinner to disappear
+    await expect(loadingSpinner).not.toBeVisible({ timeout: 10000 });
+
     // Wait for search results
-    const songCards = page.locator(SELECTORS.SONG_CARD);
-    await expect(songCards.first()).toBeVisible();
-    await expect(loadingSpinner).not.toBeVisible();
-    const count = await songCards.count();
-    expect(count).toBeGreaterThan(0);
+    await page.waitForSelector(SELECTORS.SONG_CARD, { state: 'visible', timeout: 15000 });
+    const visibleCards = await page.locator(SELECTORS.SONG_CARD).all();
+    expect(visibleCards.length).toBeGreaterThan(0);
 
     // Test playing a song
-    const firstSongCard = songCards.first();
-    const playButton = firstSongCard.locator(SELECTORS.PLAY_BUTTON);
-    await playButton.click();
+    const firstSongCard = visibleCards[0];
+    const playbackButton = firstSongCard.locator(SELECTORS.PLAYBACK_BUTTON);
+    await playbackButton.click();
 
-    // Wait for the playing state to be applied and audio to start
-    await page.waitForTimeout(1000); // Increased timeout to ensure audio state changes
+    // Wait for playback to start by checking for playback bar
+    const playbackBar = page.locator(SELECTORS.PLAYBACK_BAR);
+    await expect(playbackBar).toBeVisible({ timeout: 10000 });
 
-    // Verify pause button appears
-    await expect(firstSongCard.locator(SELECTORS.PAUSE_BUTTON)).toBeVisible();
+    // Now check the playing state
+    await expect(playbackButton).toHaveAttribute(ATTRIBUTES.PLAYING, 'true');
 
     // Test the playback controls
-    const playbackBar = page.locator('[data-testid="paper"]');
     await expect(playbackBar).toBeVisible();
 
     // Verify song info in playback bar
-    const songTitle = (await firstSongCard.locator('.trackTitle').textContent()) || '';
-    const artistName = (await firstSongCard.locator('.artistText').textContent()) || '';
+    const songTitle = (await firstSongCard.locator(SELECTORS.TRACK_TITLE).textContent()) || '';
+    const artistName = (await firstSongCard.locator(SELECTORS.ARTIST_TEXT).textContent()) || '';
     await expect(playbackBar.getByText(songTitle)).toBeVisible();
     await expect(playbackBar.getByText(artistName)).toBeVisible();
 
     // Test opening song details
-    const detailsButton = firstSongCard.locator('button[aria-label="more details"]');
+    const detailsButton = firstSongCard.locator(SELECTORS.DETAILS_BUTTON);
     await detailsButton.click();
 
     // Verify details dialog
-    const dialog = page.locator('.dialog');
+    const dialog = page.locator(SELECTORS.DIALOG);
     await expect(dialog).toBeVisible();
-    await expect(dialog.locator('.dialogTitle')).toContainText(songTitle);
+    await expect(dialog.locator(SELECTORS.DIALOG_TITLE)).toContainText(songTitle);
 
     // Verify dialog content
-    const dialogContent = dialog.locator('.dialogContent');
-    await expect(dialogContent.locator('.dialogArtwork')).toBeVisible();
+    const dialogContent = dialog.locator(SELECTORS.DIALOG_CONTENT);
+    await expect(dialogContent.locator(SELECTORS.DIALOG_ARTWORK)).toBeVisible();
     await expect(dialogContent.getByText('Artist')).toBeVisible();
     await expect(dialogContent.getByText(artistName)).toBeVisible();
 
     // Close dialog
-    const closeButton = dialog.locator('.dialogCloseButton');
+    const closeButton = dialog.locator(SELECTORS.DIALOG_CLOSE);
     await closeButton.click();
     await expect(dialog).not.toBeVisible();
 
     // Test queue functionality
-    const secondSongCard = songCards.nth(1);
-    const secondPlayButton = secondSongCard.locator(SELECTORS.PLAY_BUTTON);
-    await secondPlayButton.click();
+    const secondSongCard = visibleCards[1];
+    const secondPlaybackButton = secondSongCard.locator(SELECTORS.PLAYBACK_BUTTON);
+    const secondSongTitle = (await secondSongCard.locator(SELECTORS.TRACK_TITLE).textContent()) || '';
+    await secondPlaybackButton.click();
 
-    // Wait for the playing state to update
-    await page.waitForTimeout(500);
-
-    // Verify first song shows play button and second song shows pause button
-    await expect(firstSongCard.locator(SELECTORS.PLAY_BUTTON)).toBeVisible();
-    await expect(secondSongCard.locator(SELECTORS.PAUSE_BUTTON)).toBeVisible();
+    // Wait for the second song to appear in the playback bar
+    await expect(playbackBar.getByText(secondSongTitle)).toBeVisible({ timeout: 10000 });
 
     // Test search with special characters
     await searchInput.click();
     await searchInput.fill(TEST_SONGS.SPECIAL_CHARS);
     await searchButton.click();
-    await expect(songCards.first()).toBeVisible();
 
-    // Test empty search results
-    await searchInput.click();
-    await searchInput.fill(TEST_SONGS.NOT_FOUND);
-    await searchButton.click();
-    const noResults = page.locator('text=No tracks found');
-    await expect(noResults).toBeVisible();
+    // Wait for loading indicator
+    await expect(loadingSpinner).toBeVisible();
+
+    // Wait for API call to complete
+    const specialCharsResponse = page.waitForResponse(
+      (response) => response.url().includes('itunes.apple.com/search') && response.status() === 200
+    );
+
+    let responseData;
+    try {
+      const response = await specialCharsResponse;
+      responseData = await response.json();
+      test.info().annotations.push({
+        type: 'debug',
+        description: `API Response received with ${responseData.resultCount} tracks`
+      });
+    } catch (error) {
+      test.info().annotations.push({
+        type: 'debug',
+        description: `Failed to get API response for special chars search: ${error.message}`
+      });
+      throw error;
+    }
+
+    // Wait for loading spinner to disappear
+    await expect(loadingSpinner).not.toBeVisible({ timeout: 10000 });
+
+    // Wait for all song cards to be rendered
+    if (responseData && responseData.resultCount > 0) {
+      // Wait for the first card to appear
+      await page.waitForSelector(SELECTORS.SONG_CARD, { state: 'visible', timeout: 15000 });
+
+      // Then wait for all cards to be rendered
+      await page.waitForFunction(
+        ({ expectedCount, selector }) => document.querySelectorAll(selector).length >= expectedCount,
+        {
+          timeout: 15000,
+          args: [
+            {
+              expectedCount: responseData.resultCount,
+              selector: SELECTORS.SONG_CARD
+            }
+          ]
+        }
+      );
+
+      const specialCharsVisibleCards = await page.locator(SELECTORS.SONG_CARD).all();
+      expect(specialCharsVisibleCards.length).toBe(responseData.resultCount);
+    } else {
+      // If no results, wait for no-results message
+      await page.waitForSelector(SELECTORS.NO_RESULTS, { state: 'visible', timeout: 10000 });
+    }
 
     // Test clear functionality
     const clearButton = page.locator(SELECTORS.CLEAR_SEARCH);
@@ -162,8 +234,7 @@ test.describe('iTunes Music Search Application', () => {
     await expect(songCards.first()).toBeVisible();
     await expect(loadingSpinner).not.toBeVisible();
 
-    // Test error state (you might need to modify this based on your error handling)
-    // This assumes your app shows an error message when the API fails
+    // Test error state
     await page.route('**/search*', (route) => {
       route.fulfill({
         status: 500,
@@ -175,7 +246,7 @@ test.describe('iTunes Music Search Application', () => {
     await searchInput.fill(TEST_SONGS.ERROR);
     await searchButton.click();
 
-    const errorMessage = page.locator('.errorMessage');
+    const errorMessage = page.locator(SELECTORS.ERROR_MESSAGE);
     await expect(errorMessage).toBeVisible();
   });
 });

@@ -104,10 +104,18 @@ export function ITunesSearch({ dispatchSearchTracks, dispatchClearTracks, tracks
           onSearch={handleSearchClick}
           loading={loading}
         />
-        {error && <div className={containerStyles.errorMessage}>Error: {error.message}</div>}
+        {error && (
+          <div data-testid="error-message" className={containerStyles.errorMessage}>
+            Error: {error.message}
+          </div>
+        )}
       </Paper>
 
-      <Paper className={containerStyles.resultsContainer} elevation={0}>
+      <Paper
+        className={containerStyles.resultsContainer}
+        elevation={0}
+        sx={{ position: 'relative', overflow: 'visible' }}
+      >
         <TrackGrid tracks={tracks} loading={loading} />
       </Paper>
       <PlaybackBar />

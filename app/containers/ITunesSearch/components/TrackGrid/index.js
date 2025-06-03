@@ -35,7 +35,7 @@ const TrackGrid = ({ tracks, loading }) => {
         </div>
       ))}
       {tracks.length === 0 && !loading && (
-        <div className={gridStyles.emptyMessage}>
+        <div className={gridStyles.emptyMessage} data-testid="no-results">
           <Typography variant="body1">Search for tracks to see results</Typography>
         </div>
       )}

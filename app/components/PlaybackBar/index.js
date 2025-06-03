@@ -123,7 +123,7 @@ function PlaybackBar() {
 
   return (
     <AppBar position="fixed" color="default" sx={{ top: 'auto', bottom: 0 }}>
-      <Paper elevation={3} className={styles.playbackBar}>
+      <Paper elevation={3} className={styles.playbackBar} data-testid="playback-bar">
         <Box className={styles.trackInfo}>
           <Avatar
             src={currentTrack.artworkUrl100.replace('100x100bb', '400x400bb')}
@@ -132,10 +132,10 @@ function PlaybackBar() {
             className={styles.artwork}
           />
           <Box className={styles.trackText}>
-            <Typography variant="subtitle1" noWrap>
+            <Typography variant="subtitle1" noWrap data-testid="track-title">
               {currentTrack.trackName}
             </Typography>
-            <Typography variant="caption" color="textSecondary" noWrap>
+            <Typography variant="caption" color="textSecondary" noWrap data-testid="artist-text">
               {currentTrack.artistName}
             </Typography>
           </Box>
@@ -145,7 +145,7 @@ function PlaybackBar() {
           <IconButton onClick={handlePrevious} size="small">
             <SkipPrevious />
           </IconButton>
-          <IconButton onClick={handlePlayPause} size="medium">
+          <IconButton onClick={handlePlayPause} size="medium" data-testid={isPlaying ? 'pause-button' : 'play-button'}>
             {isPlaying ? <Pause /> : <PlayArrow />}
           </IconButton>
           <IconButton onClick={handleNext} size="small">
