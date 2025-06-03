@@ -65,6 +65,19 @@ global.Audio = jest.fn(() => mockAudio);
 describe('<ITunesSearch />', () => {
   let store;
   const mockStore = configureStore([]);
+  let defaultProps;
+  const mockTracks = [
+    {
+      trackId: 1,
+      trackName: 'Test Track',
+      artistName: 'Test Artist',
+      artworkUrl100: 'test.jpg',
+      previewUrl: 'test.mp3',
+      primaryGenreName: 'Pop',
+      collectionName: 'Test Album',
+      releaseDate: '2024-01-01'
+    }
+  ];
 
   beforeEach(() => {
     store = mockStore({
@@ -75,23 +88,26 @@ describe('<ITunesSearch />', () => {
         query: ''
       }
     });
-    jest.clearAllMocks();
-  });
-
-  const renderComponent = (props = {}) => {
-    const defaultProps = {
+    defaultProps = {
       dispatchSearchTracks: jest.fn(),
       dispatchClearTracks: jest.fn(),
       tracks: [],
       loading: false,
       error: null,
-      savedQuery: '',
+      savedQuery: ''
+    };
+    jest.clearAllMocks();
+  });
+
+  const renderComponent = (props = {}) => {
+    const componentProps = {
+      ...defaultProps,
       ...props
     };
 
     return render(
       <Provider store={store}>
-        <ITunesSearch {...defaultProps} />
+        <ITunesSearch {...componentProps} />
       </Provider>
     );
   };
@@ -124,8 +140,11 @@ describe('<ITunesSearch />', () => {
   it('should clear search when input is cleared', () => {
     renderComponent({ tracks: mockTracks });
     const input = screen.getByRole('textbox');
-    const clearButton = screen.getByTestId('clear-button');
 
+    // First set a value to make the clear button appear
+    fireEvent.change(input, { target: { value: 'test search' } });
+
+    const clearButton = screen.getByTestId('clear-search');
     fireEvent.click(clearButton);
 
     expect(input.value).toBe('');

@@ -1,4 +1,4 @@
-import { initialState, languageProviderTypes, languageProviderReducer } from '../reducer';
+import reducer, { INITIAL_STATE as initialState, languageProviderTypes } from '../reducer';
 
 /* eslint-disable default-case, no-param-reassign */
 describe('Tests for LanguageProvider actions', () => {
@@ -8,14 +8,14 @@ describe('Tests for LanguageProvider actions', () => {
   });
 
   it('returns the initial state', () => {
-    expect(languageProviderReducer(undefined, {})).toEqual(mockedState);
+    expect(reducer(undefined, {})).toEqual(mockedState);
   });
 
   it('changes the locale', () => {
     const locale = 'de';
     mockedState = { ...mockedState, locale };
     expect(
-      languageProviderReducer(undefined, {
+      reducer(undefined, {
         type: languageProviderTypes.CHANGE_LOCALE,
         locale
       })

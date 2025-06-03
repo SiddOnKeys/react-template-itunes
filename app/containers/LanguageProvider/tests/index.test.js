@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import { browserHistory } from 'react-router-dom';
 import ConnectedLanguageProvider, { LanguageProvider } from '../index';
 import configureStore from '@app/configureStore';
-import { DEFAULT_LOCALE, translationMessages } from '@app/i18n';
+import { DEFAULT_LOCALE, translationMessages } from '@app/utils/i18n';
 
 describe('<LanguageProvider /> tests', () => {
   it('should render its children', () => {

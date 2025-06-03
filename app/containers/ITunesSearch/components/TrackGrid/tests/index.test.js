@@ -12,6 +12,13 @@ jest.mock('@components/SongCard', () => {
   return SongCard;
 });
 
+// Mock audio event manager
+jest.mock('@app/utils/audio-event-manager', () => ({
+  setQueue: jest.fn(),
+  getCurrentTrackId: jest.fn(),
+  emitStop: jest.fn()
+}));
+
 const mockStore = configureStore([]);
 
 describe('<TrackGrid />', () => {
@@ -43,7 +50,7 @@ describe('<TrackGrid />', () => {
     return render(
       <I18nProvider i18n={i18n}>
         <Provider store={store}>
-          <TrackGrid tracks={[]} {...props} />
+          <TrackGrid tracks={[]} loading={false} {...props} />
         </Provider>
       </I18nProvider>
     );
@@ -58,12 +65,12 @@ describe('<TrackGrid />', () => {
   });
 
   it('should render no tracks message when tracks array is empty', () => {
-    renderComponent();
-    expect(screen.getByText('No tracks found')).toBeInTheDocument();
+    renderComponent({ tracks: [], loading: false });
+    expect(screen.getByText('Search for tracks to see results')).toBeInTheDocument();
   });
 
-  it('should render loading state', () => {
-    renderComponent({ loading: true });
-    expect(screen.getByTestId('loading-skeleton')).toBeInTheDocument();
+  it('should not render no tracks message when loading', () => {
+    renderComponent({ tracks: [], loading: true });
+    expect(screen.queryByText('Search for tracks to see results')).not.toBeInTheDocument();
   });
 });

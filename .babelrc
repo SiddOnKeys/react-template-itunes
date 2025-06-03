@@ -1,0 +1,39 @@
+{
+  "presets": ["@babel/preset-env", "@babel/preset-react"],
+  "plugins": [
+    [
+      "@babel/plugin-transform-runtime",
+      {
+        "regenerator": true
+      }
+    ],
+    [
+      "babel-plugin-transform-imports",
+      {
+        "@mui/material": {
+          "transform": "@mui/material/${member}",
+          "preventFullImport": true
+        },
+        "@mui/icons-material": {
+          "transform": "@mui/icons-material/${member}",
+          "preventFullImport": true
+        }
+      }
+    ],
+    [
+      "babel-plugin-module-resolver",
+      {
+        "root": ["./app"],
+        "alias": {
+          "@app": "./app",
+          "@components": "./app/components",
+          "@containers": "./app/containers",
+          "@utils": "./app/utils",
+          "@services": "./app/services",
+          "@themes": "./app/themes",
+          "@images": "./app/images"
+        }
+      }
+    ]
+  ]
+}

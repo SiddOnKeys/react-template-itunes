@@ -137,24 +137,16 @@ describe('<SongCard />', () => {
     it('should emit play event when clicking play', () => {
       renderComponent();
       const playButton = screen.getByTestId('playback-button');
-
-      const mockStopPropagation = jest.fn();
-      fireEvent.click(playButton, { stopPropagation: mockStopPropagation });
-
+      fireEvent.click(playButton);
       expect(audioEventManager.emitPlay).toHaveBeenCalledWith(mockTrack.trackId);
-      expect(mockStopPropagation).toHaveBeenCalled();
     });
 
     it('should emit stop event when clicking pause', () => {
       audioEventManager.getCurrentTrackId.mockReturnValue(mockTrack.trackId);
       renderComponent();
       const playButton = screen.getByTestId('playback-button');
-
-      const mockStopPropagation = jest.fn();
-      fireEvent.click(playButton, { stopPropagation: mockStopPropagation });
-
+      fireEvent.click(playButton);
       expect(audioEventManager.emitStop).toHaveBeenCalledWith(mockTrack.trackId);
-      expect(mockStopPropagation).toHaveBeenCalled();
     });
 
     it('should handle play event from audio manager', () => {
@@ -237,12 +229,8 @@ describe('<SongCard />', () => {
   describe('Details dialog', () => {
     it('should open details dialog when clicking more button', async () => {
       renderComponent();
-
-      const mockStopPropagation = jest.fn();
-      fireEvent.click(screen.getByTestId('details-button'), { stopPropagation: mockStopPropagation });
-
+      fireEvent.click(screen.getByTestId('details-button'));
       expect(screen.getByTestId('dialog')).toBeInTheDocument();
-      expect(mockStopPropagation).toHaveBeenCalled();
     });
 
     it('should show all track details in dialog', () => {
@@ -255,7 +243,7 @@ describe('<SongCard />', () => {
       expect(screen.getByText('Album')).toBeInTheDocument();
       expect(screen.getByText(mockTrack.collectionName)).toBeInTheDocument();
       expect(screen.getByText('Genre')).toBeInTheDocument();
-      expect(screen.getByText(mockTrack.primaryGenreName)).toBeInTheDocument();
+      expect(screen.getAllByText(mockTrack.primaryGenreName)[1]).toBeInTheDocument(); // Get dialog text
       expect(screen.getByText('Release Date')).toBeInTheDocument();
       expect(screen.getByText(new Date(mockTrack.releaseDate).toLocaleDateString())).toBeInTheDocument();
     });
@@ -306,17 +294,19 @@ describe('<SongCard />', () => {
   describe('Event Propagation', () => {
     it('should prevent card click when clicking play button', () => {
       renderComponent();
+      const playButton = screen.getByTestId('playback-button');
       const mockStopPropagation = jest.fn();
 
-      fireEvent.click(screen.getByTestId('playback-button'), { stopPropagation: mockStopPropagation });
+      fireEvent.click(playButton, { stopPropagation: mockStopPropagation });
       expect(mockStopPropagation).toHaveBeenCalled();
     });
 
     it('should prevent card click when clicking details button', () => {
       renderComponent();
+      const detailsButton = screen.getByTestId('details-button');
       const mockStopPropagation = jest.fn();
 
-      fireEvent.click(screen.getByTestId('details-button'), { stopPropagation: mockStopPropagation });
+      fireEvent.click(detailsButton, { stopPropagation: mockStopPropagation });
       expect(mockStopPropagation).toHaveBeenCalled();
     });
   });

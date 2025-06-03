@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   collectCoverageFrom: [
     'app/**/*.{js,jsx}',
     '!app/**/*.test.{js,jsx}',
@@ -27,8 +27,13 @@ export default {
     '.*\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
       '<rootDir>/internals/mocks/image.js'
   },
-  setupFilesAfterEnv: ['<rootDir>/internals/testing/test-bundler.js'],
+  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/internals/testing/test-bundler.js', '<rootDir>/internals/testing/jest-setup.js'],
   setupFiles: ['<rootDir>/node_modules/raf/polyfill'],
   testRegex: 'tests/.*\\.test\\.js$',
-  snapshotSerializers: []
+  snapshotSerializers: [],
+  transform: {
+    '^.+\\.(js|jsx)$': ['babel-jest', { rootMode: 'upward' }]
+  },
+  transformIgnorePatterns: ['/node_modules/(?!(@lingui|@emotion|@mui)/)']
 };

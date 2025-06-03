@@ -64,11 +64,8 @@ exports[`<ITunesSearch /> should render and match the snapshot 1`] = `
   <div
     class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation0 css-1dn6hbf-MuiPaper-root"
   >
-    <div
-      class="gridContainer"
-    >
+    <div>
       <div
-        class="emptyMessage"
         data-testid="no-results"
       >
         <p

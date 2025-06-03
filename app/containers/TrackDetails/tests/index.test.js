@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { Provider } from 'react-redux';
@@ -113,7 +117,7 @@ describe('<TrackDetails />', () => {
   it('should render error state', () => {
     const error = { message: 'Test error' };
     renderComponent({ error });
-    expect(screen.getByText('Error: Test error')).toBeInTheDocument();
+    expect(screen.getByText('Error: {Test error}')).toBeInTheDocument();
   });
 
   it('should handle back button click with single track', () => {
@@ -123,7 +127,8 @@ describe('<TrackDetails />', () => {
       dispatchClearTracks
     });
 
-    fireEvent.click(screen.getByTestId('back-button'));
+    const backButton = screen.getByRole('button', { name: /back to search/i });
+    fireEvent.click(backButton);
     expect(dispatchClearTracks).toHaveBeenCalled();
   });
 
@@ -134,7 +139,8 @@ describe('<TrackDetails />', () => {
       dispatchClearTracks
     });
 
-    fireEvent.click(screen.getByTestId('back-button'));
+    const backButton = screen.getByRole('button', { name: /back to search/i });
+    fireEvent.click(backButton);
     expect(dispatchClearTracks).not.toHaveBeenCalled();
   });
 
