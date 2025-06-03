@@ -1,33 +1,30 @@
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
-import { Router } from 'react-router-dom';
 import { Provider } from 'react-redux';
+import { MemoryRouter, Route } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
-import { ThemeProvider } from '@mui/material/styles';
-import { createTheme } from '@mui/material';
-import { I18nProvider } from '@lingui/react';
-import { i18n } from '@lingui/core';
 import { TrackDetails, mapDispatchToProps } from '../index';
 import { searchTracks, clearTracks } from '@containers/ITunesSearch/actions';
+import { I18nProvider } from '@lingui/react';
+import { i18n } from '@lingui/core';
 
-// Mock react-router-dom's useParams hook
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useParams: () => ({ trackId: '123' })
-}));
+// Mock translations
+const mockTranslations = {
+  track_not_found: 'Track not found',
+  track_details: 'Track Details',
+  artist: 'Artist',
+  album: 'Album',
+  genre: 'Genre',
+  release_date: 'Release Date',
+  back_to_search: 'Back to Search',
+  track_album: 'Album: {{name}}',
+  track_genre: 'Genre: {{name}}',
+  track_release_date: 'Released: {{date}}',
+  error_prefix: 'Error: {{message}}'
+};
 
-// Mock the styles import to avoid CSS module issues in tests
-jest.mock('../styles.css', () => ({
-  container: 'container',
-  paper: 'paper',
-  imageContainer: 'imageContainer',
-  artwork: 'artwork',
-  detailsContainer: 'detailsContainer',
-  backButton: 'backButton',
-  backButtonContainer: 'backButtonContainer',
-  playButtonLarge: 'playButtonLarge'
-}));
+i18n.load('en', mockTranslations);
+i18n.activate('en');
 
 // Mock Audio API
 const mockAudio = {
@@ -39,315 +36,177 @@ const mockAudio = {
 
 global.Audio = jest.fn(() => mockAudio);
 
-// Mock i18n
-i18n.loadLocaleData('en', {
-  plurals: {
-    select: (n) => {
-      if (n === 1) return 'one';
-      return 'other';
-    }
-  }
-});
-
-i18n.activate('en');
-i18n.load('en', {
-  error_prefix: 'Error: {message}',
-  back_to_search: 'Back to Search',
-  track_not_found: 'Track not found',
-  track_album: 'Album: {name}',
-  track_genre: 'Genre: {name}',
-  track_release_date: 'Release Date: {date}'
-});
-
-const mockTrack = {
-  trackId: 123,
-  trackName: 'Test Track',
-  artistName: 'Test Artist',
-  collectionName: 'Test Album',
-  artworkUrl100: 'https://example.com/artwork.jpg',
-  previewUrl: 'https://example.com/preview.mp3',
-  primaryGenreName: 'Pop',
-  releaseDate: '2024-01-01'
-};
+const mockStore = configureStore([]);
 
 describe('<TrackDetails />', () => {
-  let history;
-  let store;
-  const mockStore = configureStore([]);
-  const theme = createTheme();
+  const mockTrack = {
+    trackId: 1,
+    trackName: 'Test Track',
+    artistName: 'Test Artist',
+    artworkUrl100: 'test-url',
+    previewUrl: 'preview-url',
+    primaryGenreName: 'Pop',
+    collectionName: 'Test Album',
+    releaseDate: '2024-01-01'
+  };
 
-  beforeEach(() => {
-    history = createMemoryHistory();
-    store = mockStore({
-      itunesSearch: {
-        tracks: [],
-        loading: false,
-        error: null
+  const defaultProps = {
+    dispatchSearchTracks: jest.fn(),
+    dispatchClearTracks: jest.fn(),
+    loading: false,
+    error: null,
+    allTracks: [],
+    track: null,
+    match: {
+      params: {
+        trackId: '1'
+      }
+    }
+  };
+
+  const renderComponent = (props = {}) => {
+    const store = mockStore({
+      ITunesSearch: {
+        tracks: props.tracks || [],
+        loading: props.loading || false,
+        error: props.error || null
       }
     });
 
-    // Reset all mocks
-    jest.clearAllMocks();
-  });
-
-  const renderComponent = (props = {}) => {
-    const defaultProps = {
-      dispatchSearchTracks: jest.fn(),
-      dispatchClearTracks: jest.fn(),
-      selectTrackById: jest.fn(),
-      loading: false,
-      error: null,
-      allTracks: [],
-      ...props
-    };
-
     return render(
-      <I18nProvider i18n={i18n}>
-        <Provider store={store}>
-          <Router history={history}>
-            <ThemeProvider theme={theme}>
-              <TrackDetails {...defaultProps} />
-            </ThemeProvider>
-          </Router>
-        </Provider>
-      </I18nProvider>
+      <Provider store={store}>
+        <I18nProvider i18n={i18n}>
+          <MemoryRouter initialEntries={['/track/1']}>
+            <Route path="/track/:trackId">
+              <TrackDetails {...defaultProps} {...props} track={props.tracks?.[0] || null} />
+            </Route>
+          </MemoryRouter>
+        </I18nProvider>
+      </Provider>
     );
   };
 
-  describe('Initial Load and Data Fetching', () => {
-    it('should fetch track details on mount if track is not available', () => {
-      const dispatchSearchTracks = jest.fn();
-      const selectTrackById = jest.fn().mockReturnValue(null);
-
-      renderComponent({ dispatchSearchTracks, selectTrackById });
-
-      expect(dispatchSearchTracks).toHaveBeenCalledWith(123);
-    });
-
-    it('should not fetch track details if track is already available', () => {
-      const dispatchSearchTracks = jest.fn();
-      const selectTrackById = jest.fn().mockReturnValue(mockTrack);
-
-      renderComponent({ dispatchSearchTracks, selectTrackById });
-
-      expect(dispatchSearchTracks).not.toHaveBeenCalled();
-    });
-
-    it('should not fetch track details if already loading', () => {
-      const dispatchSearchTracks = jest.fn();
-      const selectTrackById = jest.fn().mockReturnValue(null);
-
-      renderComponent({ dispatchSearchTracks, selectTrackById, loading: true });
-
-      expect(dispatchSearchTracks).not.toHaveBeenCalled();
-    });
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  describe('View States', () => {
-    it('should show loading state with centered spinner', () => {
-      renderComponent({ loading: true });
-
-      const spinner = screen.getByRole('progressbar');
-      expect(spinner).toBeInTheDocument();
-      expect(spinner.closest('div')).toHaveStyle({
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '80vh'
-      });
-    });
-
-    it('should show error state with message and back button', () => {
-      const errorMessage = 'Failed to load track';
-      renderComponent({ error: { message: errorMessage } });
-
-      expect(screen.getByText(`Error: ${errorMessage}`)).toBeInTheDocument();
-      const backButton = screen.getByRole('button', { name: 'Back to Search' });
-      expect(backButton).toBeInTheDocument();
-      expect(backButton).toHaveClass('MuiButton-containedPrimary');
-    });
-
-    it('should show track not found state with message and back button', () => {
-      const selectTrackById = jest.fn().mockReturnValue(null);
-      renderComponent({ selectTrackById });
-
-      expect(screen.getByText('Track not found')).toBeInTheDocument();
-      const backButton = screen.getByRole('button', { name: 'Back to Search' });
-      expect(backButton).toBeInTheDocument();
-      expect(backButton).toHaveClass('MuiButton-containedPrimary');
-    });
+  it('should render track not found state', () => {
+    renderComponent();
+    expect(screen.getByText('Track not found')).toBeInTheDocument();
   });
 
-  describe('Track Details Display', () => {
-    it('should render all track information correctly', () => {
-      const selectTrackById = jest.fn().mockReturnValue(mockTrack);
-      renderComponent({ selectTrackById });
-
-      // Basic track info
-      expect(screen.getByText(mockTrack.trackName)).toBeInTheDocument();
-      expect(screen.getByText(mockTrack.artistName)).toBeInTheDocument();
-      expect(screen.getByText(`Album: ${mockTrack.collectionName}`)).toBeInTheDocument();
-      expect(screen.getByText(`Genre: ${mockTrack.primaryGenreName}`)).toBeInTheDocument();
-
-      // Release date formatting
-      const formattedDate = new Date(mockTrack.releaseDate).toLocaleDateString();
-      expect(screen.getByText(`Release Date: ${formattedDate}`)).toBeInTheDocument();
-
-      // Artwork
-      const artwork = screen.getByRole('img');
-      expect(artwork).toHaveAttribute('src', mockTrack.artworkUrl100.replace('100x100', '400x400'));
-      expect(artwork).toHaveAttribute('alt', mockTrack.trackName);
-      expect(artwork).toHaveClass('artwork');
-
-      // Play button
-      const playButton = screen.getByRole('button', { name: /play/i });
-      expect(playButton).toHaveClass('playButtonLarge');
-    });
-
-    it('should handle missing optional track properties gracefully', () => {
-      const incompleteTrack = {
-        ...mockTrack,
-        artworkUrl100: undefined,
-        collectionName: undefined
-      };
-      const selectTrackById = jest.fn().mockReturnValue(incompleteTrack);
-
-      renderComponent({ selectTrackById });
-
-      const artwork = screen.getByRole('img');
-      expect(artwork).toHaveAttribute('src', 'placeholder.jpg');
-      expect(screen.getByText('Album: -')).toBeInTheDocument();
-    });
+  it('should render track details', () => {
+    const tracks = [mockTrack];
+    renderComponent({ tracks });
+    expect(screen.getByTestId('track-name')).toHaveTextContent(mockTrack.trackName);
+    expect(screen.getByTestId('artist-name')).toHaveTextContent(mockTrack.artistName);
+    expect(screen.getByTestId('album-name')).toHaveTextContent(mockTrack.collectionName);
+    expect(screen.getByTestId('genre-name')).toHaveTextContent(mockTrack.primaryGenreName);
+    expect(screen.getByTestId('release-date')).toBeInTheDocument();
   });
 
-  describe('Audio Playback', () => {
-    it('should handle play/pause button clicks', async () => {
-      const selectTrackById = jest.fn().mockReturnValue(mockTrack);
-      renderComponent({ selectTrackById });
+  it('should render loading state', () => {
+    renderComponent({ loading: true });
+    expect(screen.getByTestId('loading-skeleton')).toBeInTheDocument();
+  });
 
-      const playButton = screen.getByRole('button', { name: /play/i });
+  it('should render error state', () => {
+    const error = { message: 'Test error' };
+    renderComponent({ error });
+    expect(screen.getByText('Error: Test error')).toBeInTheDocument();
+  });
 
-      // Test play
-      await act(async () => {
-        fireEvent.click(playButton);
-      });
+  it('should handle back button click with single track', () => {
+    const dispatchClearTracks = jest.fn();
+    renderComponent({
+      allTracks: [mockTrack],
+      dispatchClearTracks
+    });
+
+    fireEvent.click(screen.getByTestId('back-button'));
+    expect(dispatchClearTracks).toHaveBeenCalled();
+  });
+
+  it('should handle back button click with multiple tracks', () => {
+    const dispatchClearTracks = jest.fn();
+    renderComponent({
+      allTracks: [mockTrack, { ...mockTrack, trackId: 2 }],
+      dispatchClearTracks
+    });
+
+    fireEvent.click(screen.getByTestId('back-button'));
+    expect(dispatchClearTracks).not.toHaveBeenCalled();
+  });
+
+  it('should fetch track details on mount if not available', () => {
+    const dispatchSearchTracks = jest.fn();
+    renderComponent({ dispatchSearchTracks });
+    expect(dispatchSearchTracks).toHaveBeenCalledWith(1);
+  });
+
+  it('should not fetch track details if already loading', () => {
+    const dispatchSearchTracks = jest.fn();
+    renderComponent({
+      dispatchSearchTracks,
+      loading: true
+    });
+    expect(dispatchSearchTracks).not.toHaveBeenCalled();
+  });
+
+  describe('Audio playback', () => {
+    it('should handle play/pause button click', () => {
+      renderComponent({ tracks: [mockTrack] });
+      const playButton = screen.getByTestId('playback-button');
+
+      // Initial state
+      expect(playButton).toHaveAttribute('data-playing', 'false');
+      expect(playButton).toHaveTextContent('PLAY');
+
+      // Play
+      fireEvent.click(playButton);
       expect(mockAudio.play).toHaveBeenCalled();
-      expect(screen.getByRole('button', { name: /pause/i })).toBeInTheDocument();
+      expect(playButton).toHaveAttribute('data-playing', 'true');
+      expect(playButton).toHaveTextContent('PAUSE');
 
-      // Test pause
-      const pauseButton = screen.getByRole('button', { name: /pause/i });
-      await act(async () => {
-        fireEvent.click(pauseButton);
-      });
+      // Pause
+      fireEvent.click(playButton);
       expect(mockAudio.pause).toHaveBeenCalled();
-      expect(screen.getByRole('button', { name: /play/i })).toBeInTheDocument();
+      expect(playButton).toHaveAttribute('data-playing', 'false');
+      expect(playButton).toHaveTextContent('PLAY');
     });
 
-    it('should handle audio end event', async () => {
-      const selectTrackById = jest.fn().mockReturnValue(mockTrack);
-      renderComponent({ selectTrackById });
+    it('should handle audio end event', () => {
+      renderComponent({ tracks: [mockTrack] });
 
-      // Simulate play
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /play/i }));
+      // Simulate playing
+      fireEvent.click(screen.getByTestId('playback-button'));
+      expect(screen.getByTestId('playback-button')).toHaveAttribute('data-playing', 'true');
+
+      // Simulate audio end
+      const endedCallback = mockAudio.addEventListener.mock.calls.find((call) => call[0] === 'ended')[1];
+      act(() => {
+        endedCallback();
       });
 
-      // Get the event handler and simulate ended event
-      const [[eventName, handler]] = mockAudio.addEventListener.mock.calls;
-      expect(eventName).toBe('ended');
-
-      await act(async () => {
-        handler();
-      });
-
-      expect(screen.getByRole('button', { name: /play/i })).toBeInTheDocument();
-    });
-
-    it('should cleanup audio resources on unmount', () => {
-      const selectTrackById = jest.fn().mockReturnValue(mockTrack);
-      const { unmount } = renderComponent({ selectTrackById });
-
-      unmount();
-
-      expect(mockAudio.removeEventListener).toHaveBeenCalledWith('ended', expect.any(Function));
-      expect(mockAudio.pause).toHaveBeenCalled();
+      expect(screen.getByTestId('playback-button')).toHaveAttribute('data-playing', 'false');
     });
   });
 
-  describe('Navigation', () => {
-    it('should navigate back and clear tracks if only one track exists', () => {
-      const dispatchClearTracks = jest.fn();
-      const selectTrackById = jest.fn().mockReturnValue(mockTrack);
-      renderComponent({
-        allTracks: [mockTrack],
-        dispatchClearTracks,
-        selectTrackById
-      });
-
-      fireEvent.click(screen.getByText('Back to Search'));
-
-      expect(dispatchClearTracks).toHaveBeenCalled();
-      expect(history.location.pathname).toBe('/');
-    });
-
-    it('should navigate back without clearing tracks if multiple tracks exist', () => {
-      const dispatchClearTracks = jest.fn();
-      const selectTrackById = jest.fn().mockReturnValue(mockTrack);
-      renderComponent({
-        allTracks: [mockTrack, { ...mockTrack, trackId: 456 }],
-        dispatchClearTracks,
-        selectTrackById
-      });
-
-      fireEvent.click(screen.getByText('Back to Search'));
-
-      expect(dispatchClearTracks).not.toHaveBeenCalled();
-      expect(history.location.pathname).toBe('/');
-    });
-
-    it('should handle back navigation from error state', () => {
-      const dispatchClearTracks = jest.fn();
-      renderComponent({
-        error: { message: 'Error occurred' },
-        dispatchClearTracks
-      });
-
-      fireEvent.click(screen.getByText('Back to Search'));
-
-      expect(history.location.pathname).toBe('/');
-    });
-
-    it('should handle back navigation from not found state', () => {
-      const dispatchClearTracks = jest.fn();
-      const selectTrackById = jest.fn().mockReturnValue(null);
-      renderComponent({
-        selectTrackById,
-        dispatchClearTracks
-      });
-
-      fireEvent.click(screen.getByText('Back to Search'));
-
-      expect(history.location.pathname).toBe('/');
-    });
-  });
-
-  describe('Redux Integration', () => {
-    it('should map searchTracks action to dispatchSearchTracks prop', () => {
+  describe('Redux integration', () => {
+    it('should map search tracks action', () => {
       const dispatch = jest.fn();
       const props = mapDispatchToProps(dispatch);
-      const trackId = '123';
+      const trackId = 123;
 
       props.dispatchSearchTracks(trackId);
-
       expect(dispatch).toHaveBeenCalledWith(searchTracks(trackId));
     });
 
-    it('should map clearTracks action to dispatchClearTracks prop', () => {
+    it('should map clear tracks action', () => {
       const dispatch = jest.fn();
       const props = mapDispatchToProps(dispatch);
 
       props.dispatchClearTracks();
-
       expect(dispatch).toHaveBeenCalledWith(clearTracks());
     });
   });

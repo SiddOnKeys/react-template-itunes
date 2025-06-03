@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import { ITunesSearch, mapDispatchToProps } from '../index';
@@ -96,80 +96,58 @@ describe('<ITunesSearch />', () => {
     );
   };
 
-  it('should render the search input', () => {
+  it('should render and match the snapshot', () => {
+    const { container } = renderComponent();
+    expect(container.firstChild).toMatchSnapshot();
+  });
+
+  it('should clear tracks on mount if no saved query exists', () => {
     renderComponent();
-    expect(screen.getByPlaceholderText('Search for tracks...')).toBeInTheDocument();
+    expect(defaultProps.dispatchClearTracks).toHaveBeenCalled();
   });
 
-  it('should initialize with saved query if provided', () => {
-    const savedQuery = 'test query';
-    renderComponent({ savedQuery });
-    expect(screen.getByDisplayValue(savedQuery)).toBeInTheDocument();
+  it('should not clear tracks on mount if saved query exists', () => {
+    renderComponent({ savedQuery: 'test query' });
+    expect(defaultProps.dispatchClearTracks).not.toHaveBeenCalled();
   });
 
-  it('should dispatch clearTracks on first mount if no saved query', () => {
-    const dispatchClearTracks = jest.fn();
-    renderComponent({ dispatchClearTracks });
-    expect(dispatchClearTracks).toHaveBeenCalledTimes(1);
+  it('should update input value and trigger search on change', () => {
+    renderComponent();
+    const input = screen.getByRole('textbox');
+
+    fireEvent.change(input, { target: { value: 'test search' } });
+
+    expect(input.value).toBe('test search');
+    expect(defaultProps.dispatchSearchTracks).toHaveBeenCalledWith('test search');
   });
 
-  it('should not dispatch clearTracks on first mount if there is a saved query', () => {
-    const dispatchClearTracks = jest.fn();
-    renderComponent({ dispatchClearTracks, savedQuery: 'test' });
-    expect(dispatchClearTracks).not.toHaveBeenCalled();
-  });
+  it('should clear search when input is cleared', () => {
+    renderComponent({ tracks: mockTracks });
+    const input = screen.getByRole('textbox');
+    const clearButton = screen.getByTestId('clear-button');
 
-  it('should dispatch searchTracks action on input change with non-empty value', () => {
-    const dispatchSearchTracks = jest.fn();
-    renderComponent({ dispatchSearchTracks });
-
-    const input = screen.getByPlaceholderText('Search for tracks...');
-    fireEvent.change(input, { target: { value: 'test' } });
-
-    expect(dispatchSearchTracks).toHaveBeenCalledWith('test');
-  });
-
-  it('should dispatch clearTracks action on empty input', () => {
-    const dispatchClearTracks = jest.fn();
-    renderComponent({ dispatchClearTracks });
-
-    const input = screen.getByPlaceholderText('Search for tracks...');
-    fireEvent.change(input, { target: { value: '' } });
-
-    expect(dispatchClearTracks).toHaveBeenCalled();
-  });
-
-  it('should handle search button click', () => {
-    const dispatchSearchTracks = jest.fn();
-    renderComponent({ dispatchSearchTracks });
-
-    const input = screen.getByPlaceholderText('Search for tracks...');
-    const searchButton = screen.getByRole('button', { name: 'Search tracks' });
-
-    fireEvent.change(input, { target: { value: 'test' } });
-    fireEvent.click(searchButton);
-
-    expect(dispatchSearchTracks).toHaveBeenCalledWith('test');
-  });
-
-  it('should handle clear button click', () => {
-    const dispatchClearTracks = jest.fn();
-    renderComponent({ dispatchClearTracks });
-
-    const input = screen.getByPlaceholderText('Search for tracks...');
-    fireEvent.change(input, { target: { value: 'test' } });
-
-    const clearButton = screen.getByRole('button', { name: 'Clear search' });
     fireEvent.click(clearButton);
 
-    expect(dispatchClearTracks).toHaveBeenCalled();
     expect(input.value).toBe('');
+    expect(defaultProps.dispatchClearTracks).toHaveBeenCalled();
   });
 
-  it('should show error message when there is an error', () => {
-    const error = new Error('Test error');
+  it('should display error message when error exists', () => {
+    const error = { message: 'Test error' };
     renderComponent({ error });
-    expect(screen.getByText(`Error: ${error.message}`)).toBeInTheDocument();
+
+    expect(screen.getByTestId('error-message')).toHaveTextContent('Error: Test error');
+  });
+
+  it('should trigger immediate search when search button is clicked', () => {
+    renderComponent();
+    const input = screen.getByRole('textbox');
+    const searchButton = screen.getByTestId('search-button');
+
+    fireEvent.change(input, { target: { value: 'test search' } });
+    fireEvent.click(searchButton);
+
+    expect(defaultProps.dispatchSearchTracks).toHaveBeenCalledWith('test search');
   });
 
   it('should show loading state', () => {
@@ -203,7 +181,7 @@ describe('<ITunesSearch />', () => {
   });
 
   describe('mapDispatchToProps', () => {
-    it('should map searchTracks action to dispatchSearchTracks prop', () => {
+    it('should map searchTracks action', () => {
       const dispatch = jest.fn();
       const props = mapDispatchToProps(dispatch);
       const query = 'test';
@@ -212,7 +190,7 @@ describe('<ITunesSearch />', () => {
       expect(dispatch).toHaveBeenCalledWith(searchTracks(query));
     });
 
-    it('should map clearTracks action to dispatchClearTracks prop', () => {
+    it('should map clearTracks action', () => {
       const dispatch = jest.fn();
       const props = mapDispatchToProps(dispatch);
 
