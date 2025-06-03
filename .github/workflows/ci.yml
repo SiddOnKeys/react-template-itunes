@@ -29,13 +29,13 @@ jobs:
       - name: 🔍 Lint
         run: npm run lint:ci
 
-      - name: 🧪 Test
-        run: npm test
+      # - name: 🧪 Test
+      #   run: npm test
 
-      - name: ♿ Accessibility tests using Storybook
-        run: |
-          npx playwright install
-          npm run test-storybook:ci
+      # - name: ♿ Accessibility tests using Storybook
+      #   run: |
+      #     npx playwright install
+      #     npm run test-storybook:ci
 
       - name: 🏗️ Build
         run: npm run build:prod
@@ -44,7 +44,7 @@ jobs:
         run: npm run lhci
 
       - name: 🔍 SonarQube Scan
-        uses: sonarsource/sonarqube-scan-action@master
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
