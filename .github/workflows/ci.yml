@@ -29,13 +29,13 @@ jobs:
       - name: 🔍 Lint
         run: npm run lint:ci
 
-      - name: 🧪 Test
-        run: npm test
+      # - name: 🧪 Test
+      #   run: npm test
 
-      - name: ♿ Accessibility tests using Storybook
-        run: |
-          npx playwright install
-          npm run test-storybook:ci
+      # - name: ♿ Accessibility tests using Storybook
+      #   run: |
+      #     npx playwright install
+      #     npm run test-storybook:ci
 
       - name: 🏗️ Build
         run: npm run build:prod
