@@ -1,8 +1,8 @@
 import { call, put, takeLatest, delay } from 'redux-saga/effects';
 import { SEARCH_TRACKS } from './constants';
 import { searchTracksSuccess, searchTracksError } from './actions';
-import { searchTracks as searchTracksApi } from '@app/services/itunesApi';
-import { translate } from '@app/utils';
+import { searchTracks as searchTracksApi } from '@services/itunesApi';
+import { translate } from '@utils';
 
 /**
  * Search tracks saga

@@ -12,15 +12,7 @@ module.exports = {
     'jest/globals': true,
     commonjs: true
   },
-  plugins: [
-    'react',
-    'redux-saga',
-    'react-hooks',
-    'jest',
-    "github",
-    "immutable",
-    "sonarjs"
-  ],
+  plugins: ['react', 'redux-saga', 'react-hooks', 'jest', 'github', 'immutable', 'sonarjs'],
 
   extends: [
     'prettier',
@@ -28,9 +20,20 @@ module.exports = {
     'prettier-standard',
     'plugin:react/recommended',
     'eslint:recommended',
-    "plugin:sonarjs/recommended",
+    'plugin:sonarjs/recommended',
     'plugin:security/recommended-legacy',
-    "plugin:github/recommended"],
+    'plugin:github/recommended'
+  ],
+  overrides: [
+    {
+      files: ['jest.config.js'],
+      rules: {
+        'import/no-commonjs': 'off',
+        'import/unambiguous': 'off',
+        'import/no-nodejs-modules': 'off'
+      }
+    }
+  ],
   rules: {
     'import/no-webpack-loader-syntax': 0,
     'react/display-name': 0,
@@ -44,38 +47,44 @@ module.exports = {
         patterns: ['@mui/*/*/*']
       }
     ],
-    "max-lines-per-function": ["error", 250],
-    "no-else-return": "error",
-    "max-params": ["error", 3],
-    "require-jsdoc": ["error", {
-      "require": {
-        "FunctionDeclaration": true,
-        "MethodDefinition": false,
-        "ClassDeclaration": false,
-        "ArrowFunctionExpression": false,
-        "FunctionExpression": false,
-      },
-    }],
-    "no-shadow": "error",
-    "complexity": ["error", 5],
-    "no-empty": "error",
-    "import/order": ["error", { "groups": [["builtin", "external", "internal", "parent", "sibling", "index"]] }],
-    "immutable/no-this": 2,
-    "immutable/no-mutation": ['error', {
-      exceptions: [
-        {
-          object: "draft"
-        },
-        {
-          property: "propTypes"
-        },
-        {
-          property: 'defaultProps'
+    'max-lines-per-function': ['error', 250],
+    'no-else-return': 'error',
+    'max-params': ['error', 3],
+    'require-jsdoc': [
+      'error',
+      {
+        require: {
+          FunctionDeclaration: true,
+          MethodDefinition: false,
+          ClassDeclaration: false,
+          ArrowFunctionExpression: false,
+          FunctionExpression: false
         }
-      ]
-    }],
-    "eslint-comments/no-use": 0,
-    "max-lines": ["error", 350],
+      }
+    ],
+    'no-shadow': 'error',
+    complexity: ['error', 5],
+    'no-empty': 'error',
+    'import/order': ['error', { groups: [['builtin', 'external', 'internal', 'parent', 'sibling', 'index']] }],
+    'immutable/no-this': 2,
+    'immutable/no-mutation': [
+      'error',
+      {
+        exceptions: [
+          {
+            object: 'draft'
+          },
+          {
+            property: 'propTypes'
+          },
+          {
+            property: 'defaultProps'
+          }
+        ]
+      }
+    ],
+    'eslint-comments/no-use': 0,
+    'max-lines': ['error', 350]
   },
   globals: {
     GLOBAL: false,
@@ -84,19 +93,19 @@ module.exports = {
     describe: false
   },
   settings: {
-    "react": {
-      "version": "detect"
+    react: {
+      version: 'detect'
     },
-    "import/resolver": {
-      "alias": {
+    'import/resolver': {
+      alias: {
         map: [
-          ["@app", "./app",],
-          ["@images", "./app/images",],
-          ["@components", "./app/components",],
-          ["@containers", "./app/containers",],
-          ["@utils", "./app/utils",],
-          ["@services", "./app/services",],
-          ["@themes", "./app/themes",]
+          ['@app', './app'],
+          ['@images', './app/images'],
+          ['@components', './app/components'],
+          ['@containers', './app/containers'],
+          ['@utils', './app/utils'],
+          ['@services', './app/services'],
+          ['@themes', './app/themes']
         ]
       }
     }

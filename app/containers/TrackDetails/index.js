@@ -13,7 +13,7 @@ import styles from './styles.css';
 // Render loading state
 const LoadingView = () => (
   <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
-    <CircularProgress />
+    <CircularProgress data-testid="loading-skeleton" />
   </Box>
 );
 
@@ -54,7 +54,7 @@ NotFoundView.propTypes = {
 
 // Main track details view
 const TrackDetailsView = ({ track, isPlaying, onPlayPause, onBack }) => (
-  <Box className={styles.container}>
+  <Box className={styles.container} data-testid="track-details-container">
     <Box mb={3} className={styles.backButtonContainer}>
       <Button
         startIcon={<ArrowBackIcon />}
@@ -63,6 +63,7 @@ const TrackDetailsView = ({ track, isPlaying, onPlayPause, onBack }) => (
         color="primary"
         size="large"
         className={styles.backButton}
+        data-testid="back-button"
       >
         <T id="back_to_search" />
       </Button>
@@ -74,22 +75,23 @@ const TrackDetailsView = ({ track, isPlaying, onPlayPause, onBack }) => (
             src={track.artworkUrl100?.replace('100x100', '400x400')}
             alt={track.trackName}
             className={styles.artwork}
+            data-testid="track-artwork"
           />
         </Box>
         <Box className={styles.detailsContainer}>
-          <Typography variant="h4" component="h1" gutterBottom>
+          <Typography variant="h4" component="h1" gutterBottom data-testid="track-name">
             {track.trackName}
           </Typography>
-          <Typography variant="h5" component="h2" color="textSecondary" gutterBottom>
+          <Typography variant="h5" component="h2" color="textSecondary" gutterBottom data-testid="artist-name">
             {track.artistName}
           </Typography>
-          <Typography variant="body1" gutterBottom>
+          <Typography variant="body1" gutterBottom data-testid="album-name">
             <T id="track_album" values={{ name: track.collectionName }} />
           </Typography>
-          <Typography variant="body1" gutterBottom>
+          <Typography variant="body1" gutterBottom data-testid="genre-name">
             <T id="track_genre" values={{ name: track.primaryGenreName }} />
           </Typography>
-          <Typography variant="body1" gutterBottom>
+          <Typography variant="body1" gutterBottom data-testid="release-date">
             <T id="track_release_date" values={{ date: new Date(track.releaseDate).toLocaleDateString() }} />
           </Typography>
           <Box mt={3}>
@@ -99,6 +101,8 @@ const TrackDetailsView = ({ track, isPlaying, onPlayPause, onBack }) => (
               onClick={onPlayPause}
               className={styles.playButtonLarge}
               size="large"
+              data-testid="playback-button"
+              data-playing={isPlaying}
             >
               {isPlaying ? 'PAUSE' : 'PLAY'}
             </Button>
@@ -131,23 +135,15 @@ TrackDetailsView.propTypes = {
  * @param {Object} props Component props
  * @param {Function} props.dispatchSearchTracks Function to fetch track details
  * @param {Function} props.dispatchClearTracks Function to clear tracks from store
- * @param {Function} props.selectTrackById Function to select track by ID
  * @param {boolean} props.loading Loading state
  * @param {Object} props.error Error state
  * @param {Array} props.allTracks All tracks in the store
+ * @param {Object} props.track Selected track
  */
-export function TrackDetails({
-  dispatchSearchTracks,
-  dispatchClearTracks,
-  selectTrackById,
-  loading,
-  error,
-  allTracks
-}) {
+export function TrackDetails({ dispatchSearchTracks, dispatchClearTracks, loading, error, allTracks, track }) {
   const { trackId: trackIdParam } = useParams();
   const trackId = Number(trackIdParam);
   const history = useHistory();
-  const track = selectTrackById(trackId);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio] = useState(() => (track ? new Audio(track.previewUrl) : null));
@@ -216,12 +212,10 @@ export function TrackDetails({
 TrackDetails.propTypes = {
   dispatchSearchTracks: PropTypes.func.isRequired,
   dispatchClearTracks: PropTypes.func.isRequired,
-  selectTrackById: PropTypes.func.isRequired,
   loading: PropTypes.bool,
-  error: PropTypes.shape({
-    message: PropTypes.string
-  }),
-  allTracks: PropTypes.array.isRequired
+  error: PropTypes.object,
+  allTracks: PropTypes.array,
+  track: PropTypes.object
 };
 
 /**
@@ -229,13 +223,15 @@ TrackDetails.propTypes = {
  * @param {Object} state Global Redux state
  * @returns {Object} Props for component
  */
-const mapStateToProps = (state) => {
+const mapStateToProps = (state, props) => {
+  const { trackId } = props.match.params;
   const selectTrackById = makeSelectTrackById();
+
   return {
-    selectTrackById: (id) => selectTrackById(state, id),
     loading: selectLoading(state),
     error: selectError(state),
-    allTracks: selectTracks(state)
+    allTracks: selectTracks(state),
+    track: selectTrackById(state, Number(trackId))
   };
 };
 
@@ -246,7 +242,7 @@ const mapStateToProps = (state) => {
  */
 export function mapDispatchToProps(dispatch) {
   return {
-    dispatchSearchTracks: (trackId) => dispatch(searchTracks(trackId)),
+    dispatchSearchTracks: (id) => dispatch(searchTracks(id)),
     dispatchClearTracks: () => dispatch(clearTracks())
   };
 }

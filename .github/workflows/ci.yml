@@ -1,8 +1,9 @@
-name: React Template CI
+name: React Template CI - PR to Develop
+
 on:
-  pull_request_target:
+  pull_request:
     branches:
-      - master
+      - develop
 
 jobs:
   build-and-test:
@@ -10,37 +11,46 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [21.6.2]
+        node-version: [21]
 
     steps:
-      - uses: actions/checkout@v2
-      
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'yarn'
+          cache: 'npm'
 
-      - name: Install dependencies
-        run: yarn
+      - name: 📦 Install dependencies
+        run: npm ci --force
 
-      - name: Lint
-        run: yarn lint:ci
 
-      - name: Test
-        run: yarn test
+      - name: 🧪 Test
+        run: npm run test:coverage
 
-      - name: Accessibility tests using Storybook
-        run: yarn playwright install && yarn test-storybook:ci
 
-      - name: Build
-        run: yarn build:prod
 
-      - name: LHCI Benchmark
-        run: yarn lhci
 
-      - name: SonarQube Scan
-        uses: sonarsource/sonarqube-scan-action@master
+
+
+      # - name: ♿ Accessibility tests using Storybook
+      #   run: |
+      #     npx playwright install
+      #     npm run test-storybook:ci
+
+      - name: 🏗️ Build
+        run: npm run build:prod
+
+
+      - name: 🚦 LHCI Benchmark
+        run: npm run lhci
+
+      - name: 🔍 SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
-            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-            SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+#ci

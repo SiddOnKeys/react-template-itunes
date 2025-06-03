@@ -24,7 +24,7 @@ import { For } from '@components/For';
 import { If } from '@app/components/If';
 import ConnectedLanguageProvider from '@containers/LanguageProvider';
 import ErrorBoundary from '@app/components/ErrorBoundary/index';
-import { translationMessages } from '@app/i18n';
+import { translationMessages } from '@utils/i18n';
 import history from '@utils/history';
 import { SCREEN_BREAK_POINTS } from '@utils/constants';
 import configureStore from '@app/configureStore';
@@ -119,6 +119,12 @@ export function App() {
     setPersistor(p);
   }, []);
 
+  // Convert routeConfig to array for safer iteration
+  const routes = Object.entries(routeConfig).map(([key, route]) => ({
+    key,
+    ...route
+  }));
+
   return (
     <If condition={!!persistor} otherwise={<div>LOADING</div>}>
       <PersistGate loading={null} persistor={persistor}>
@@ -136,17 +142,13 @@ export function App() {
                         <StyledContainer maxWidth={false} disableGutters>
                           <For
                             ParentComponent={(props) => <Switch {...props} />}
-                            of={Object.keys(routeConfig)}
-                            renderItem={(routeKey, index) => {
-                              if (!Object.prototype.hasOwnProperty.call(routeConfig, routeKey)) {
-                                return null;
-                              }
-                              const route = routeConfig[routeKey];
+                            of={routes}
+                            renderItem={(route, index) => {
                               const Component = route.component;
                               return (
                                 <Route
                                   exact={route.exact}
-                                  key={index}
+                                  key={route.key}
                                   path={route.route}
                                   render={(props) => {
                                     const updatedProps = {

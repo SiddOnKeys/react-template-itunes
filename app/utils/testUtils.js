@@ -6,7 +6,7 @@ import { BrowserRouter, Router } from 'react-router-dom';
 import { i18n } from '@lingui/core';
 import { ThemeProvider } from '@mui/material/styles';
 import configureStore from '@app/configureStore';
-import { DEFAULT_LOCALE, translationMessages } from '@app/i18n';
+import { DEFAULT_LOCALE, translationMessages } from '@app/utils/i18n';
 import ConnectedLanguageProvider from '@containers/LanguageProvider';
 import { theme } from '@containers/App';
 

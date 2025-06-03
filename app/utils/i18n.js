@@ -5,10 +5,10 @@
  *
  */
 
+import get from 'lodash/get';
+
 const enTranslationMessages =
-  process.env.NODE_ENV === 'production'
-    ? require('@app/translations/en').messages
-    : require('@app/translations/en.json');
+  process.env.NODE_ENV === 'production' ? require('../translations/en').messages : require('../translations/en.json');
 
 export const DEFAULT_LOCALE = 'en';
 
@@ -18,14 +18,17 @@ export const appLocales = [
 ];
 
 export const formatTranslationMessages = (locale, messages) => {
+  if (!messages || typeof messages !== 'object') {
+    return {};
+  }
+
   const defaultFormattedMessages =
     locale !== DEFAULT_LOCALE ? formatTranslationMessages(DEFAULT_LOCALE, enTranslationMessages) : {};
-  const flattenFormattedMessages = (formattedMessages, key) => {
-    const formattedMessage =
-      !messages[key] && locale !== DEFAULT_LOCALE ? defaultFormattedMessages[key] : messages[key];
-    return Object.assign(formattedMessages, { [key]: formattedMessage });
-  };
-  return Object.keys(messages).reduce(flattenFormattedMessages, {});
+
+  // Convert to entries, map them safely, and convert back to object
+  return Object.fromEntries(
+    Object.entries(messages).map(([key, value]) => [key, value || get(defaultFormattedMessages, key, '')])
+  );
 };
 
 export const translationMessages = {

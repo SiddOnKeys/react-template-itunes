@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { OutlinedInput, InputAdornment, IconButton, CircularProgress } from '@mui/material';
 import { Search as SearchIcon, Clear as ClearIcon } from '@mui/icons-material';
-import inputStyles from '../styles/Input.css';
+import inputStyles from '../../styles/Input.css';
 
 /**
  * Search input component with clear and search buttons
