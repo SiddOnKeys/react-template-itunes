@@ -215,6 +215,7 @@
     "imports-loader": "3.0.0",
     "jest-cli": "27.0.5",
     "jest-coverage-badges": "^1.1.2",
+    "jest-environment-jsdom": "^30.0.0-beta.3",
     "jest-fetch-mock": "^3.0.3",
     "jest-sonar": "^0.2.12",
     "less": "^4.1.1",
